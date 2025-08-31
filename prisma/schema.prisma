@@ -1,0 +1,367 @@
+// Racing Decoded - F1 Driver DNA Analysis Database Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Season model
+model Season {
+  year Int     @id
+  url  String?
+
+  @@map("seasons")
+}
+
+// Core F1 data models (from CSV imports)
+model Driver {
+  id          Int       @id @default(autoincrement())
+  driverId    Int       @unique
+  driverRef   String
+  number      Int?
+  code        String?
+  forename    String
+  surname     String
+  dob         DateTime?
+  nationality String?
+  url         String?
+
+  // Relations
+  results         Result[]
+  qualifying      Qualifying[]
+  lapTimes        LapTime[]
+  pitStops        PitStop[]
+  driverStandings DriverStanding[]
+  sprintResults   SprintResult[]
+
+  // DNA Analysis results
+  dnaProfile    DriverDnaProfile?
+  dnaBreakdowns DriverDnaBreakdown[] @relation("DriverBreakdowns")
+  dnaTimeline   DriverDnaTimeline[]  @relation("DriverTimeline")
+  
+  // Racing statistics
+  racingStats   DriverRacingStats?
+
+  @@map("drivers")
+}
+
+model Constructor {
+  id             Int     @id @default(autoincrement())
+  constructorId  Int     @unique
+  constructorRef String
+  name           String
+  nationality    String?
+  url            String?
+
+  // Relations
+  results              Result[]
+  qualifying           Qualifying[]
+  constructorResults   ConstructorResult[]
+  constructorStandings ConstructorStanding[]
+  sprintResults        SprintResult[]
+
+  @@map("constructors")
+}
+
+model Race {
+  id          Int       @id @default(autoincrement())
+  raceId      Int       @unique
+  year        Int
+  round       Int
+  circuitId   Int
+  name        String
+  date        DateTime
+  time        String?
+  url         String?
+  fp1_date    DateTime? @map("fp1_date")
+  fp1_time    String?   @map("fp1_time")
+  fp2_date    DateTime? @map("fp2_date")
+  fp2_time    String?   @map("fp2_time")
+  fp3_date    DateTime? @map("fp3_date")
+  fp3_time    String?   @map("fp3_time")
+  quali_date  DateTime? @map("quali_date")
+  quali_time  String?   @map("quali_time")
+  sprint_date DateTime? @map("sprint_date")
+  sprint_time String?   @map("sprint_time")
+
+  // Relations
+  circuit              Circuit               @relation(fields: [circuitId], references: [circuitId])
+  results              Result[]
+  qualifying           Qualifying[]
+  lapTimes             LapTime[]
+  pitStops             PitStop[]
+  constructorResults   ConstructorResult[]
+  driverStandings      DriverStanding[]
+  constructorStandings ConstructorStanding[]
+  sprintResults        SprintResult[]
+
+  @@map("races")
+}
+
+model Circuit {
+  id         Int     @id @default(autoincrement())
+  circuitId  Int     @unique
+  circuitRef String
+  name       String
+  location   String?
+  country    String?
+  lat        Float?
+  lng        Float?
+  alt        Int?
+  url        String?
+
+  // Relations
+  races Race[]
+
+  @@map("circuits")
+}
+
+model Result {
+  id              Int     @id @default(autoincrement())
+  resultId        Int     @unique
+  raceId          Int
+  driverId        Int
+  constructorId   Int
+  number          Int?
+  grid            Int
+  position        Int?
+  positionText    String
+  positionOrder   Int
+  points          Float
+  laps            Int
+  time            String?
+  milliseconds    BigInt?
+  fastestLap      Int?
+  rank            Int?
+  fastestLapTime  String?
+  fastestLapSpeed String?
+  statusId        Int
+
+  // Relations
+  race        Race        @relation(fields: [raceId], references: [raceId])
+  driver      Driver      @relation(fields: [driverId], references: [driverId])
+  constructor Constructor @relation(fields: [constructorId], references: [constructorId])
+  statusRef   Status      @relation(fields: [statusId], references: [statusId])
+
+  @@map("results")
+}
+
+model Qualifying {
+  id            Int     @id @default(autoincrement())
+  qualifyId     Int     @unique
+  raceId        Int
+  driverId      Int
+  constructorId Int
+  number        Int
+  position      Int
+  q1            String?
+  q2            String?
+  q3            String?
+
+  // Relations
+  race        Race        @relation(fields: [raceId], references: [raceId])
+  driver      Driver      @relation(fields: [driverId], references: [driverId])
+  constructor Constructor @relation(fields: [constructorId], references: [constructorId])
+
+  @@map("qualifying")
+}
+
+model LapTime {
+  id           Int    @id @default(autoincrement())
+  raceId       Int
+  driverId     Int
+  lap          Int
+  position     Int
+  time         String
+  milliseconds BigInt
+
+  // Relations
+  race   Race   @relation(fields: [raceId], references: [raceId])
+  driver Driver @relation(fields: [driverId], references: [driverId])
+
+  @@map("lap_times")
+}
+
+model PitStop {
+  id           Int    @id @default(autoincrement())
+  raceId       Int
+  driverId     Int
+  stop         Int
+  lap          Int
+  time         String
+  duration     String
+  milliseconds BigInt
+
+  // Relations
+  race   Race   @relation(fields: [raceId], references: [raceId])
+  driver Driver @relation(fields: [driverId], references: [driverId])
+
+  @@map("pit_stops")
+}
+
+model DriverStanding {
+  id                Int    @id @default(autoincrement())
+  driverStandingsId Int    @unique
+  raceId            Int
+  driverId          Int
+  points           Float
+  position         Int
+  positionText     String
+  wins             Int
+
+  // Relations
+  race   Race   @relation(fields: [raceId], references: [raceId])
+  driver Driver @relation(fields: [driverId], references: [driverId])
+
+  @@map("driver_standings")
+}
+
+model ConstructorResult {
+  id                   Int     @id @default(autoincrement())
+  constructorResultsId Int     @unique
+  raceId               Int
+  constructorId        Int
+  points               Float
+  status               String?
+
+  // Relations
+  race        Race        @relation(fields: [raceId], references: [raceId])
+  constructor Constructor @relation(fields: [constructorId], references: [constructorId])
+
+  @@map("constructor_results")
+}
+
+model ConstructorStanding {
+  id                     Int    @id @default(autoincrement())
+  constructorStandingsId Int    @unique
+  raceId                 Int
+  constructorId          Int
+  points                Float
+  position              Int
+  positionText          String
+  wins                  Int
+
+  // Relations
+  race        Race        @relation(fields: [raceId], references: [raceId])
+  constructor Constructor @relation(fields: [constructorId], references: [constructorId])
+
+  @@map("constructor_standings")
+}
+
+model SprintResult {
+  id             Int     @id @default(autoincrement())
+  resultId       Int     @unique
+  raceId         Int
+  driverId       Int
+  constructorId  Int
+  number         Int
+  grid           Int
+  position       Int?
+  positionText   String
+  positionOrder  Int
+  points         Float
+  laps           Int
+  time           String?
+  milliseconds   BigInt?
+  fastestLap     Int?
+  fastestLapTime String?
+  statusId       Int
+
+  // Relations
+  race        Race        @relation(fields: [raceId], references: [raceId])
+  driver      Driver      @relation(fields: [driverId], references: [driverId])
+  constructor Constructor @relation(fields: [constructorId], references: [constructorId])
+  statusRef   Status      @relation(fields: [statusId], references: [statusId])
+
+  @@map("sprint_results")
+}
+
+model Status {
+  id       Int    @id @default(autoincrement())
+  statusId Int    @unique
+  status   String
+
+  // Relations
+  results       Result[]
+  sprintResults SprintResult[]
+
+  @@map("status")
+}
+
+// DNA Analysis Models
+model DriverDnaProfile {
+  id                       Int      @id @default(autoincrement())
+  driverId                 Int      @unique
+  driverName               String
+  aggressionScore          Float?
+  pressurePerformanceScore Float?
+  consistencyScore         Float?
+  racecraftScore           Float?
+  weatherMasteryScore      Float?
+  clutchFactorScore        Float?
+  raceStartScore           Float?
+  imageUrl                 String?
+  racesAnalyzed            Int
+  careerSpan               String
+  lastUpdated              DateTime @default(now())
+
+  // Relations
+  driver     Driver               @relation(fields: [driverId], references: [driverId])
+  breakdowns DriverDnaBreakdown[] @relation("ProfileBreakdowns")
+
+  @@map("drivers_dna_profiles")
+}
+
+model DriverDnaBreakdown {
+  id                Int     @id @default(autoincrement())
+  driverId          Int
+  traitName         String
+  rawValue          Float
+  normalizedScore   Float
+  contributingStats Json
+  calculationNotes  String?
+
+  // Relations
+  driver     Driver           @relation("DriverBreakdowns", fields: [driverId], references: [driverId], map: "breakdown_driver_fkey")
+  dnaProfile DriverDnaProfile @relation("ProfileBreakdowns", fields: [driverId], references: [driverId], map: "breakdown_profile_fkey")
+
+  @@map("drivers_dna_breakdown")
+}
+
+model DriverDnaTimeline {
+  id             Int    @id @default(autoincrement())
+  driverId       Int
+  season         Int
+  traitScores    Json
+  racesCompleted Int
+
+  // Relations
+  driver     Driver           @relation("DriverTimeline", fields: [driverId], references: [driverId], map: "timeline_driver_fkey")
+
+  @@unique([driverId, season])
+  @@map("drivers_dna_timeline")
+}
+
+model DriverRacingStats {
+  id                     Int      @id @default(autoincrement())
+  driverId               Int      @unique
+  totalRaces             Int
+  wins                   Int
+  secondPlaces           Int
+  thirdPlaces            Int
+  podiums                Int
+  avgFinishPosition      Float?
+  bestChampionshipFinish Int?
+  avgChampionshipFinish  Float?
+  seasonsCompleted       Int
+  lastUpdated            DateTime @default(now())
+
+  // Relations
+  driver Driver @relation(fields: [driverId], references: [driverId])
+
+  @@map("driver_racing_stats")
+}

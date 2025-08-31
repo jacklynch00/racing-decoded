@@ -39,3 +39,79 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Prisma client is now generated to node_modules/@prisma/client (default location)
+
+# Raw F1 Data - CSV files are large and can be re-downloaded
+/data_processing/f1_data/
+*.csv
+
+# Python virtual environments
+/data_processing/venv/
+venv/
+env/
+.venv/
+.env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# Database dumps and backups
+*.sql
+*.dump
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files and logs
+*.log
+*.tmp
+*.temp
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Local driver images (we use Wikipedia URLs instead)
+/public/images/drivers/
+
+# Documentation generated files (keep source .md files)
+/docs/build/
+/docs/.docusaurus/
+
+# Temporary markdown files
+RESTART_SERVER.md
+example_driver_images.md

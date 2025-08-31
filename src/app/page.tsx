@@ -1,103 +1,254 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+import { useState, useMemo } from 'react';
+import { useDrivers } from '@/lib/api';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Search, Check, ChevronsUpDown, X } from 'lucide-react';
+import { getCountryFlag } from '@/lib/flags';
+import { cn } from '@/lib/utils';
+import { DriverAvatar } from '@/components/driver-avatar';
+import Link from 'next/link';
+import { DriverWithDNA } from '@/lib/types';
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+// Available countries from the flags mapping
+const countries = [
+	'German',
+	'British',
+	'Spanish',
+	'French',
+	'Italian',
+	'Dutch',
+	'Finnish',
+	'Brazilian',
+	'Australian',
+	'Canadian',
+	'Mexican',
+	'Monégasque',
+	'Austrian',
+	'Belgian',
+	'Danish',
+	'Japanese',
+	'Polish',
+	'Swiss',
+	'Swedish',
+	'Argentine',
+	'South African',
+	'New Zealander',
+	'American',
+	'Chilean',
+	'Colombian',
+	'Venezuelan',
+	'Portuguese',
+	'Thai',
+	'Malaysian',
+	'Indian',
+	'Russian',
+	'Irish',
+	'Hungarian',
+	'Czech',
+	'Uruguayan',
+	'East German',
+	'West German',
+	'Rhodesian',
+	'Yugoslavian',
+].sort();
+
+function DNAScoreBadge({ label, score }: { label: string; score: number | null }) {
+	if (score === null) {
+		return (
+			<Badge variant='outline' className='bg-gray-100 text-gray-600 border-gray-200'>
+				{label}: N/A
+			</Badge>
+		);
+	}
+
+	const getColor = (value: number) => {
+		if (value >= 70) return 'bg-green-100 text-green-800 border-green-200';
+		if (value >= 50) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+		return 'bg-red-100 text-red-800 border-red-200';
+	};
+
+	return (
+		<Badge variant='outline' className={getColor(score)}>
+			{label}: {score.toFixed(1)}
+		</Badge>
+	);
+}
+
+function DriverCard({ driver }: { driver: DriverWithDNA }) {
+	const profile = driver.dnaProfile;
+	const flag = getCountryFlag(driver.nationality);
+
+	if (!profile) {
+		return null; // Skip drivers without DNA profiles
+	}
+
+	return (
+		<Link href={`/driver/${driver.id}`}>
+			<Card className='cursor-pointer hover:shadow-lg transition-shadow'>
+				<CardHeader>
+					<div className='flex items-start gap-3 mb-2'>
+						<DriverAvatar driverId={driver.id} driverName={driver.name} imageUrl={profile.imageUrl} size={48} />
+						<div className='flex-1'>
+							<CardTitle className='flex justify-between items-start mb-1'>
+								{driver.name}
+								{flag && (
+									<span className='text-xl cursor-help transition-transform hover:scale-110' title={driver.nationality || undefined}>
+										{flag}
+									</span>
+								)}
+							</CardTitle>
+							<CardDescription>
+								{profile.racesAnalyzed} races analyzed • {profile.careerSpan}
+							</CardDescription>
+						</div>
+					</div>
+				</CardHeader>
+				<CardContent>
+					<div className='flex flex-wrap gap-2'>
+						<DNAScoreBadge label='Aggression' score={profile.aggressionScore} />
+						<DNAScoreBadge label='Consistency' score={profile.consistencyScore} />
+						<DNAScoreBadge label='Racecraft' score={profile.racecraftScore} />
+						<DNAScoreBadge label='Pressure' score={profile.pressurePerformanceScore} />
+						{profile.clutchFactorScore && <DNAScoreBadge label='Clutch' score={profile.clutchFactorScore} />}
+						<DNAScoreBadge label='Race Start' score={profile.raceStartScore} />
+					</div>
+				</CardContent>
+			</Card>
+		</Link>
+	);
+}
+
+export default function HomePage() {
+	const { data: drivers, isLoading, error } = useDrivers();
+	const [searchTerm, setSearchTerm] = useState('');
+	const [selectedCountry, setSelectedCountry] = useState('');
+	const [countryPopoverOpen, setCountryPopoverOpen] = useState(false);
+
+	const filteredDrivers = useMemo(() => {
+		if (!drivers) return [];
+
+		let filtered = drivers;
+
+		// Filter by name if search term exists
+		if (searchTerm.trim()) {
+			const search = searchTerm.toLowerCase();
+			filtered = filtered.filter((driver) => driver.name.toLowerCase().includes(search));
+		}
+
+		// Filter by country if selected
+		if (selectedCountry) {
+			filtered = filtered.filter((driver) => driver.nationality === selectedCountry);
+		}
+
+		return filtered;
+	}, [drivers, searchTerm, selectedCountry]);
+
+	if (isLoading) {
+		return (
+			<div className='flex justify-center items-center min-h-[400px]'>
+				<p>Loading drivers...</p>
+			</div>
+		);
+	}
+
+	if (error) {
+		return (
+			<div className='flex justify-center items-center min-h-[400px]'>
+				<p className='text-red-500'>Error loading drivers: {error.message}</p>
+			</div>
+		);
+	}
+
+	return (
+		<div className='space-y-6'>
+			<div>
+				<h1 className='text-3xl font-bold mb-2'>F1 Driver DNA Profiles</h1>
+				<p className='text-muted-foreground'>Explore the personality traits of Formula 1 drivers through data analysis</p>
+			</div>
+
+			<div className='flex gap-4'>
+				<div className='relative flex-1'>
+					<Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4' />
+					<Input placeholder='Search drivers by name...' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className='pl-10' />
+				</div>
+
+				<div className='flex-shrink-0'>
+					<Popover open={countryPopoverOpen} onOpenChange={setCountryPopoverOpen}>
+						<PopoverTrigger asChild>
+							<Button variant='outline' role='combobox' aria-expanded={countryPopoverOpen} className='w-[200px] justify-between'>
+								{selectedCountry ? (
+									<span className='flex items-center gap-2'>
+										{getCountryFlag(selectedCountry)}
+										{selectedCountry}
+									</span>
+								) : (
+									'Select nationality...'
+								)}
+								<ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+							</Button>
+						</PopoverTrigger>
+						<PopoverContent className='w-[200px] p-0'>
+							<Command>
+								<CommandInput placeholder='Search nationality...' />
+								<CommandList>
+									<CommandEmpty>No nationality found.</CommandEmpty>
+									<CommandGroup>
+										{countries.map((country) => (
+											<CommandItem
+												key={country}
+												value={country}
+												onSelect={(currentValue) => {
+													setSelectedCountry(currentValue === selectedCountry ? '' : currentValue);
+													setCountryPopoverOpen(false);
+												}}>
+												<div className='flex items-center gap-2 flex-1'>
+													{getCountryFlag(country)}
+													{country}
+												</div>
+												<Check className={cn('ml-auto h-4 w-4', selectedCountry === country ? 'opacity-100' : 'opacity-0')} />
+											</CommandItem>
+										))}
+									</CommandGroup>
+								</CommandList>
+							</Command>
+						</PopoverContent>
+					</Popover>
+
+					{selectedCountry && (
+						<Button variant='ghost' size='sm' className='ml-2 px-2' onClick={() => setSelectedCountry('')}>
+							<X className='h-4 w-4' />
+						</Button>
+					)}
+				</div>
+			</div>
+
+			<div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+				{filteredDrivers.map((driver) => (
+					<DriverCard key={driver.id} driver={driver} />
+				))}
+			</div>
+
+			{filteredDrivers.length === 0 && (searchTerm.trim() || selectedCountry) && (
+				<div className='text-center py-12'>
+					<p className='text-muted-foreground'>
+						No drivers found matching the current filters
+						{searchTerm.trim() && ` (name: "${searchTerm}")`}
+						{selectedCountry && ` (nationality: ${selectedCountry})`}
+					</p>
+				</div>
+			)}
+
+			{drivers && drivers.length === 0 && (
+				<div className='text-center py-12'>
+					<p className='text-muted-foreground'>No drivers with DNA profiles found.</p>
+				</div>
+			)}
+		</div>
+	);
 }
