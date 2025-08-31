@@ -1,0 +1,47 @@
+// Country name to flag emoji mapping
+const countryToFlag: Record<string, string> = {
+  'German': '🇩🇪',
+  'British': '🇬🇧',
+  'Spanish': '🇪🇸',
+  'French': '🇫🇷',
+  'Italian': '🇮🇹',
+  'Dutch': '🇳🇱',
+  'Finnish': '🇫🇮',
+  'Brazilian': '🇧🇷',
+  'Australian': '🇦🇺',
+  'Canadian': '🇨🇦',
+  'Mexican': '🇲🇽',
+  'Monégasque': '🇲🇨',
+  'Austrian': '🇦🇹',
+  'Belgian': '🇧🇪',
+  'Danish': '🇩🇰',
+  'Japanese': '🇯🇵',
+  'Polish': '🇵🇱',
+  'Swiss': '🇨🇭',
+  'Swedish': '🇸🇪',
+  'Argentine': '🇦🇷',
+  'South African': '🇿🇦',
+  'New Zealander': '🇳🇿',
+  'American': '🇺🇸',
+  'Chilean': '🇨🇱',
+  'Colombian': '🇨🇴',
+  'Venezuelan': '🇻🇪',
+  'Portuguese': '🇵🇹',
+  'Thai': '🇹🇭',
+  'Malaysian': '🇲🇾',
+  'Indian': '🇮🇳',
+  'Russian': '🇷🇺',
+  'Irish': '🇮🇪',
+  'Hungarian': '🇭🇺',
+  'Czech': '🇨🇿',
+  'Uruguayan': '🇺🇾',
+  'East German': '🇩🇪',
+  'West German': '🇩🇪',
+  'Rhodesian': '🇿🇼',
+  'Yugoslavian': '🇷🇸',
+};
+
+export function getCountryFlag(nationality: string | null): string | null {
+  if (!nationality) return null;
+  return countryToFlag[nationality] || null;
+}
