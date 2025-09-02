@@ -19,6 +19,7 @@ interface RaceControlsProps {
 	currentLapTime: number | null;
 	averageLapTime: number | null;
 	hasPitStops: boolean;
+	lapProgress?: number;
 }
 
 export function RaceControls({
@@ -33,6 +34,7 @@ export function RaceControls({
 	currentLapTime,
 	averageLapTime,
 	hasPitStops,
+	lapProgress = 0,
 }: RaceControlsProps) {
 	const [speed, setSpeed] = useState(1);
 
@@ -43,16 +45,20 @@ export function RaceControls({
 	};
 
 	const getSpeedLabel = (speed: number): string => {
-		if (speed <= 0.5) return 'Very Slow';
 		if (speed <= 1) return 'Normal';
 		if (speed <= 2) return 'Fast';
 		if (speed <= 4) return 'Very Fast';
 		return 'Ultra Fast';
 	};
 
-	const getProgressPercentage = (): number => {
+	const getOverallProgressPercentage = (): number => {
 		if (totalLaps === 0) return 0;
-		return (currentLap / totalLaps) * 100;
+		// Calculate overall progress including current lap progress
+		const completedLaps = Math.max(0, currentLap - 1);
+		const currentLapProgress = lapProgress || 0;
+		const progress = ((completedLaps + currentLapProgress) / totalLaps) * 100;
+		// Ensure progress is between 0 and 100
+		return Math.min(100, Math.max(0, progress));
 	};
 
 	const formatTime = (seconds: number | null): string => {
@@ -106,11 +112,11 @@ export function RaceControls({
 						</span>
 					</div>
 					<div className='w-full bg-muted rounded-full h-2'>
-						<div className='bg-primary h-2 rounded-full transition-all duration-300' style={{ width: `${getProgressPercentage()}%` }} />
+						<div className='bg-primary h-2 rounded-full' style={{ width: `${getOverallProgressPercentage()}%` }} />
 					</div>
 					<div className='flex justify-between text-xs text-muted-foreground'>
 						<span>Start</span>
-						<span>{getProgressPercentage().toFixed(1)}% Complete</span>
+						<span>{getOverallProgressPercentage().toFixed(1)}% Complete</span>
 						<span>Finish</span>
 					</div>
 				</div>
@@ -127,14 +133,15 @@ export function RaceControls({
 						</Badge>
 					</div>
 
-					<Slider value={[speed]} onValueChange={handleSpeedChange} min={0.25} max={8} step={0.25} className='w-full' />
+					<Slider value={[speed]} onValueChange={handleSpeedChange} min={1} max={6} step={1} className='w-full' />
 
 					<div className='flex justify-between text-xs text-muted-foreground'>
-						<span>0.25x</span>
 						<span>1x</span>
 						<span>2x</span>
+						<span>3x</span>
 						<span>4x</span>
-						<span>8x</span>
+						<span>5x</span>
+						<span>6x</span>
 					</div>
 				</div>
 

@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { trackAnimator, AnimationData } from '@/utils/trackAnimation';
+import { AnimationData } from '@/utils/trackAnimation';
+import { CanvasF1Animator, initializeCanvasAnimator } from '@/utils/canvasTrackAnimator';
+import { MONACO_TRACK } from '@/utils/trackLayouts';
 import { RaceControls } from './RaceControls';
 
 interface TrackVisualizationProps {
@@ -18,14 +20,15 @@ export function TrackVisualization({ raceId, driverId }: TrackVisualizationProps
 	const [currentLap, setCurrentLap] = useState(0);
 	const [totalLaps, setTotalLaps] = useState(0);
 	const [currentLapTime, setCurrentLapTime] = useState<number | null>(null);
+	const [lapProgress, setLapProgress] = useState(0);
 	const [isAnimating, setIsAnimating] = useState(false);
 	const [isPaused, setIsPaused] = useState(false);
 	const [showPitStop, setShowPitStop] = useState(false);
 	const [pitStopDuration, setPitStopDuration] = useState(0);
 
-	const trackContainerRef = useRef<HTMLDivElement>(null);
-	const [trackLoaded, setTrackLoaded] = useState(false);
-	const [svgContent, setSvgContent] = useState<string>('');
+	const canvasRef = useRef<HTMLCanvasElement>(null);
+	const animatorRef = useRef<CanvasF1Animator | null>(null);
+	const [trackInitialized, setTrackInitialized] = useState(false);
 
 	// Load animation data when props change
 	useEffect(() => {
@@ -41,7 +44,11 @@ export function TrackVisualization({ raceId, driverId }: TrackVisualizationProps
 
 				const data: AnimationData = await response.json();
 				setAnimationData(data);
-				trackAnimator.loadAnimationData(data);
+
+				// Load data into Canvas animator if initialized
+				if (animatorRef.current) {
+					animatorRef.current.loadAnimationData(data);
+				}
 
 				// Initialize lap counter
 				setTotalLaps(data.animationData.totalLaps);
@@ -59,110 +66,127 @@ export function TrackVisualization({ raceId, driverId }: TrackVisualizationProps
 		}
 	}, [raceId, driverId]);
 
-	// Load track when component first renders with animation data
+	// Initialize Canvas when component mounts
 	useEffect(() => {
-		if (animationData && !trackLoaded) {
-			console.log('TrackVisualization: Animation data available, loading track...');
+		console.log('TrackVisualization: Canvas effect triggered', {
+			hasCanvas: !!canvasRef.current,
+			trackInitialized,
+			hasAnimationData: !!animationData,
+		});
+
+		if (canvasRef.current && !trackInitialized) {
+			try {
+				console.log('TrackVisualization: Initializing Canvas animator...');
+				animatorRef.current = initializeCanvasAnimator(canvasRef.current, MONACO_TRACK);
+				setTrackInitialized(true);
+
+				// Load data if already available
+				if (animationData) {
+					animatorRef.current.loadAnimationData(animationData);
+				}
+
+				console.log('TrackVisualization: Canvas animator initialized successfully');
+			} catch (err) {
+				console.error('TrackVisualization: Failed to initialize Canvas animator:', err);
+				setError(`Failed to initialize track animation: ${err instanceof Error ? err.message : 'Unknown error'}`);
+			}
+		}
+	}, [animationData, trackInitialized]);
+
+	// Additional effect to try initializing when canvas ref becomes available
+	useEffect(() => {
+		if (canvasRef.current && !trackInitialized && !animatorRef.current) {
 			const timer = setTimeout(() => {
-				loadTrack();
+				try {
+					console.log('TrackVisualization: Delayed Canvas initialization...');
+					animatorRef.current = initializeCanvasAnimator(canvasRef.current!, MONACO_TRACK);
+					setTrackInitialized(true);
+
+					if (animationData) {
+						animatorRef.current.loadAnimationData(animationData);
+					}
+
+					console.log('TrackVisualization: Delayed Canvas initialization successful');
+				} catch (err) {
+					console.error('TrackVisualization: Delayed Canvas initialization failed:', err);
+					setError(`Failed to initialize track animation: ${err instanceof Error ? err.message : 'Unknown error'}`);
+				}
 			}, 100);
 
 			return () => clearTimeout(timer);
 		}
-	}, [animationData, trackLoaded]);
+	}, [trackInitialized, animationData]);
 
 	// Cleanup on unmount
 	useEffect(() => {
 		return () => {
-			trackAnimator.pause();
+			if (animatorRef.current) {
+				animatorRef.current.destroy();
+			}
 		};
 	}, []);
 
 	// Setup animation callbacks
 	useEffect(() => {
-		trackAnimator.setCallbacks({
-			onLapUpdate: (lap, total, lapTime) => {
-				setCurrentLap(lap);
-				setTotalLaps(total);
-				setCurrentLapTime(lapTime || null);
-			},
-			onPitStop: (lap, duration) => {
-				setShowPitStop(true);
-				setPitStopDuration(duration);
-				// Hide pit stop notification after duration
-				setTimeout(() => setShowPitStop(false), Math.min(duration * 1000, 3000));
-			},
-			onComplete: () => {
-				setIsAnimating(false);
-				setIsPaused(false);
-			},
-		});
-	}, []);
-
-	const loadTrack = async () => {
-		try {
-			if (trackContainerRef.current) {
-				const rawSvgContent = await trackAnimator.loadTrack(trackContainerRef.current);
-
-				// Scale down SVG to fit container
-				const modifiedSvgContent = rawSvgContent
-					.replace(/width="1014"/, 'width="280px"')
-					.replace(/height="1297"/, 'height="358px"')
-					.replace('<svg', '<svg viewBox="0 0 1014 1297" preserveAspectRatio="xMidYMid meet"');
-
-				setSvgContent(modifiedSvgContent);
-			}
-		} catch (err) {
-			console.error('TrackVisualization: Failed to load track:', err);
-			setError(`Failed to load track visualization: ${err instanceof Error ? err.message : 'Unknown error'}`);
+		if (animatorRef.current) {
+			animatorRef.current.setCallbacks({
+				onLapUpdate: (lap, total, lapTime, progress = 0) => {
+					setCurrentLap(lap);
+					setTotalLaps(total);
+					setCurrentLapTime(lapTime || null);
+					setLapProgress(progress);
+				},
+				onPitStop: (lap, duration) => {
+					setShowPitStop(true);
+					setPitStopDuration(duration);
+					// Hide pit stop notification after duration
+					setTimeout(() => setShowPitStop(false), Math.min(duration * 1000, 3000));
+				},
+				onComplete: () => {
+					setIsAnimating(false);
+					setIsPaused(false);
+				},
+			});
 		}
-	};
-
-	// Initialize track after SVG content is rendered
-	useEffect(() => {
-		if (svgContent && trackContainerRef.current && !trackLoaded) {
-			const timer = setTimeout(() => {
-				try {
-					trackAnimator.initializeTrack(trackContainerRef.current!);
-					setTrackLoaded(true);
-				} catch (err) {
-					console.error('TrackVisualization: Failed to initialize track:', err);
-					setError(`Failed to initialize track: ${err instanceof Error ? err.message : 'Unknown error'}`);
-				}
-			}, 200);
-
-			return () => clearTimeout(timer);
-		}
-	}, [svgContent, trackLoaded]);
+	}, [trackInitialized]);
 
 	const handleStart = () => {
+		if (!animatorRef.current) return;
+
 		if (isPaused) {
-			trackAnimator.resume();
+			animatorRef.current.resume();
 			setIsPaused(false);
 		} else {
-			trackAnimator.start();
+			animatorRef.current.start();
 			setCurrentLap(1);
 		}
 		setIsAnimating(true);
 	};
 
 	const handlePause = () => {
-		trackAnimator.pause();
+		if (!animatorRef.current) return;
+
+		animatorRef.current.pause();
 		setIsAnimating(false);
 		setIsPaused(true);
 	};
 
 	const handleReset = () => {
-		trackAnimator.reset();
+		if (!animatorRef.current) return;
+
+		animatorRef.current.reset();
 		setIsAnimating(false);
 		setIsPaused(false);
 		setCurrentLap(0);
 		setCurrentLapTime(null);
+		setLapProgress(0);
 		setShowPitStop(false);
 	};
 
 	const handleSpeedChange = (speed: number) => {
-		trackAnimator.setSpeed(speed);
+		if (!animatorRef.current) return;
+
+		animatorRef.current.setSpeed(speed);
 	};
 
 	if (loading) {
@@ -246,32 +270,26 @@ export function TrackVisualization({ raceId, driverId }: TrackVisualizationProps
 					</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<div className='flex gap-6'>
+					<div className='flex gap-6 flex-wrap w-full'>
 						{/* Track Container */}
-						<div className='flex-1'>
-							<div
-								id='track-container'
-								ref={trackContainerRef}
-								className='bg-gray-100 rounded-lg flex items-center justify-center'
-								style={{ width: '100%', height: '600px' }}>
-								{svgContent ? (
-									<div
-										dangerouslySetInnerHTML={{ __html: svgContent }}
-										style={{
-											display: 'flex',
-											alignItems: 'center',
-											justifyContent: 'center',
-											width: '100%',
-											height: '100%',
-										}}
-									/>
-								) : (
-									<p className='text-muted-foreground'>Loading track...</p>
-								)}
+						<div className=''>
+							<div className='rounded-lg flex items-center justify-center relative' style={{ width: '100%', height: '500px' }}>
+								<canvas
+									ref={canvasRef}
+									width={600}
+									height={500}
+									className='rounded-lg border border-gray-300'
+									style={{
+										width: '600px',
+										height: '500px',
+										display: trackInitialized ? 'block' : 'none',
+									}}
+								/>
+								{!trackInitialized && <p className='text-white absolute inset-0 flex items-center justify-center'>Initializing track...</p>}
 							</div>
 
 							{/* Animation Status Overlay */}
-							{trackLoaded && !animationData.animationData.hasLapTimes && (
+							{trackInitialized && !animationData?.animationData.hasLapTimes && (
 								<div className='absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center'>
 									<Card className='max-w-md'>
 										<CardContent className='py-6'>
@@ -283,8 +301,8 @@ export function TrackVisualization({ raceId, driverId }: TrackVisualizationProps
 						</div>
 
 						{/* Race Controls */}
-						<div className='w-fit'>
-							{trackLoaded && animationData.animationData.hasLapTimes && (
+						<div className='min-w-fit'>
+							{trackInitialized && animationData?.animationData.hasLapTimes && (
 								<RaceControls
 									onStart={handleStart}
 									onPause={handlePause}
@@ -297,6 +315,7 @@ export function TrackVisualization({ raceId, driverId }: TrackVisualizationProps
 									currentLapTime={currentLapTime}
 									averageLapTime={animationData.animationData.averageLapTime}
 									hasPitStops={animationData.animationData.hasPitStops}
+									lapProgress={lapProgress}
 								/>
 							)}
 						</div>
