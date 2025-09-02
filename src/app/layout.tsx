@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ReactQueryProvider } from '@/lib/react-query';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -22,8 +24,20 @@ export default function RootLayout({
           <div className="min-h-screen bg-background">
             <header className="border-b">
               <div className="container mx-auto px-4 py-4">
-                <h1 className="text-2xl font-bold">Racing Decoded</h1>
-                <p className="text-muted-foreground">F1 Driver DNA Analysis</p>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h1 className="text-2xl font-bold">Racing Decoded</h1>
+                    <p className="text-muted-foreground">F1 Driver DNA Analysis</p>
+                  </div>
+                  <nav className="flex items-center gap-4">
+                    <Link href="/">
+                      <Button variant="ghost">Drivers</Button>
+                    </Link>
+                    <Link href="/track-animation">
+                      <Button variant="ghost">Track Animation</Button>
+                    </Link>
+                  </nav>
+                </div>
               </div>
             </header>
             <main className="container mx-auto px-4 py-8">

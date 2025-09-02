@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { ArrowLeft, Play, Pause, RotateCcw, Settings } from 'lucide-react';
+import { TrackVisualization } from '@/components/TrackVisualization';
 
 // Available tracks (starting with Monaco)
 const AVAILABLE_TRACKS = [
@@ -246,40 +247,13 @@ export default function TrackAnimationPage() {
         </Card>
       </div>
 
-      {/* Animation Controls */}
+      {/* Track Animation */}
       {canStartAnimation && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Ready to Animate!</CardTitle>
-            <CardDescription>
-              Watch {selectedDriver?.name} race around {AVAILABLE_TRACKS.find(t => t.id === selectedTrack)?.name} 
-              {' '}in {selectedRace?.name} {selectedRace?.year}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Button size="lg">
-                  <Play className="mr-2 h-4 w-4" />
-                  Start Animation
-                </Button>
-                <Button variant="outline" size="lg" disabled>
-                  <Pause className="mr-2 h-4 w-4" />
-                  Pause
-                </Button>
-                <Button variant="outline" size="lg" onClick={resetSelections}>
-                  <RotateCcw className="mr-2 h-4 w-4" />
-                  Reset
-                </Button>
-              </div>
-              
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Settings className="h-4 w-4" />
-                <span>Animation controls coming soon</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <TrackVisualization
+          raceId={selectedRace!.raceId}
+          driverId={selectedDriver!.driverId}
+          trackId={selectedTrack!}
+        />
       )}
 
       {/* Feature Preview */}
