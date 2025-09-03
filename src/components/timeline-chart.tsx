@@ -1,6 +1,7 @@
 'use client';
 
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Info } from 'lucide-react';
 
@@ -54,6 +55,29 @@ const DataRequirementsInfo = () => (
 	</TooltipProvider>
 );
 
+const chartConfig = {
+	aggression: {
+		label: 'Aggression',
+		color: 'var(--chart-1)',
+	},
+	consistency: {
+		label: 'Consistency', 
+		color: 'var(--chart-2)',
+	},
+	racecraft: {
+		label: 'Racecraft',
+		color: 'var(--chart-3)',
+	},
+	pressure_performance: {
+		label: 'Pressure Performance',
+		color: 'var(--chart-4)',
+	},
+	race_start: {
+		label: 'Race Start',
+		color: 'var(--chart-5)',
+	},
+};
+
 export function TimelineChart({ data }: TimelineChartProps) {
 	if (!data || data.length === 0) {
 		return (
@@ -79,77 +103,88 @@ export function TimelineChart({ data }: TimelineChartProps) {
 			<div className='flex justify-end mb-3'>
 				<DataRequirementsInfo />
 			</div>
-			<div className='w-full h-96'>
-				<ResponsiveContainer width='100%' height='100%'>
-					<LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-						<CartesianGrid strokeDasharray='3 3' className='opacity-30' />
-						<XAxis dataKey='season' tick={{ fontSize: 12 }} tickLine={{ stroke: '#6b7280' }} />
-						<YAxis domain={[0, 100]} tick={{ fontSize: 12 }} tickLine={{ stroke: '#6b7280' }} />
-						<Tooltip
-							content={({ active, payload, label }) => {
-								if (active && payload && payload.length) {
-									const races = payload[0]?.payload?.races;
+			<ChartContainer config={chartConfig} className='w-full h-80 sm:h-96'>
+				<LineChart data={chartData} margin={{ top: 20, right: 15, left: 20, bottom: 40 }}>
+					<CartesianGrid strokeDasharray='3 3' />
+					<XAxis 
+						dataKey='season' 
+						tick={{ fontSize: 11 }}
+						angle={-45}
+						textAnchor="end"
+						height={50}
+					/>
+					<YAxis 
+						domain={[0, 100]} 
+						tick={{ fontSize: 11 }}
+						width={50}
+					/>
+					<ChartTooltip 
+						content={
+							<ChartTooltipContent 
+								formatter={(value, name) => {
 									const getScoreColor = (score: number | null) => {
 										if (!score) return 'text-muted-foreground';
 										if (score >= 70) return 'text-green-600 dark:text-green-400';
 										if (score >= 50) return 'text-blue-600 dark:text-blue-400';
 										return 'text-yellow-600 dark:text-yellow-400';
 									};
-
-									return (
-										<div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
-											<p className="font-medium text-popover-foreground mb-2">
-												{label} Season{races ? ` • ${races} races` : ''}
-											</p>
-											<div className="space-y-1">
-												{payload.map((entry, index) => {
-													const nameMap: Record<string, string> = {
-														aggression: 'Aggression',
-														consistency: 'Consistency',
-														racecraft: 'Racecraft',
-														pressure_performance: 'Pressure Performance',
-														race_start: 'Race Start',
-													};
-													const score = entry.value as number | null;
-													return (
-														<div key={index} className="flex justify-between items-center gap-2">
-															<span className="text-sm text-popover-foreground">
-																{nameMap[entry.dataKey as string] || entry.dataKey}:
-															</span>
-															<span className={`font-medium ${getScoreColor(score)}`}>
-																{score !== null ? score.toFixed(1) : 'N/A'}
-															</span>
-														</div>
-													);
-												})}
-											</div>
-										</div>
-									);
-								}
-								return null;
-							}}
-						/>
-						<Legend
-							wrapperStyle={{ paddingTop: '20px' }}
-							formatter={(value) => {
-								const nameMap: Record<string, string> = {
-									aggression: 'Aggression',
-									consistency: 'Consistency',
-									racecraft: 'Racecraft',
-									pressure_performance: 'Pressure Performance',
-									race_start: 'Race Start',
-								};
-								return nameMap[value] || value;
-							}}
-						/>
-						<Line type='monotone' dataKey='aggression' stroke='#ef4444' strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name='aggression' />
-						<Line type='monotone' dataKey='consistency' stroke='#3b82f6' strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name='consistency' />
-						<Line type='monotone' dataKey='racecraft' stroke='#10b981' strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name='racecraft' />
-						<Line type='monotone' dataKey='pressure_performance' stroke='#f59e0b' strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name='pressure_performance' />
-						<Line type='monotone' dataKey='race_start' stroke='#8b5cf6' strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name='race_start' />
-					</LineChart>
-				</ResponsiveContainer>
-			</div>
+									
+									return [
+										<span key="value" className={getScoreColor(value as number)}>
+											{value !== null ? (value as number).toFixed(1) : 'N/A'}
+										</span>,
+										name
+									];
+								}}
+								labelFormatter={(label) => {
+									return `${label} Season`;
+								}}
+							/>
+						}
+					/>
+					<Legend />
+					<Line 
+						type='monotone' 
+						dataKey='aggression' 
+						stroke='var(--color-aggression)'
+						strokeWidth={2} 
+						dot={{ r: 4 }} 
+						activeDot={{ r: 6 }} 
+					/>
+					<Line 
+						type='monotone' 
+						dataKey='consistency' 
+						stroke='var(--color-consistency)'
+						strokeWidth={2} 
+						dot={{ r: 4 }} 
+						activeDot={{ r: 6 }} 
+					/>
+					<Line 
+						type='monotone' 
+						dataKey='racecraft' 
+						stroke='var(--color-racecraft)'
+						strokeWidth={2} 
+						dot={{ r: 4 }} 
+						activeDot={{ r: 6 }} 
+					/>
+					<Line 
+						type='monotone' 
+						dataKey='pressure_performance' 
+						stroke='var(--color-pressure_performance)'
+						strokeWidth={2} 
+						dot={{ r: 4 }} 
+						activeDot={{ r: 6 }} 
+					/>
+					<Line 
+						type='monotone' 
+						dataKey='race_start' 
+						stroke='var(--color-race_start)'
+						strokeWidth={2} 
+						dot={{ r: 4 }} 
+						activeDot={{ r: 6 }} 
+					/>
+				</LineChart>
+			</ChartContainer>
 		</div>
 	);
 }

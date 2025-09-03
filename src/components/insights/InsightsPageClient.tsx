@@ -3,23 +3,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { getAllInsights, getInsightsByCategory, insightCategories } from '@/lib/insights-config';
-import { TrendingUp, Lightbulb, AlertTriangle, BarChart3 } from 'lucide-react';
-
-const categoryIcons = {
-	paradox: AlertTriangle,
-	evolution: TrendingUp,
-	relationship: Lightbulb,
-	performance: BarChart3,
-};
+import { getAllInsights, insightCategories } from '@/lib/insights-config';
+import { Lightbulb } from 'lucide-react';
 
 export function InsightsPageClient() {
 	const allInsights = getAllInsights();
 
-	const getCategoryIcon = (category: keyof typeof insightCategories) => {
-		const IconComponent = categoryIcons[category];
-		return <IconComponent className='h-5 w-5' />;
-	};
 
 	return (
 		<div className='space-y-8'>

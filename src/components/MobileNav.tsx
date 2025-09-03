@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -26,7 +27,7 @@ export function MobileNav() {
 					{/* Logo/Title */}
 					<div>
 						<Link href='/' className='flex items-center gap-3'>
-							<img src='/racing-decoded.png' alt='Racing Decoded' className='h-8 w-8' />
+							<Image src='/racing-decoded.png' alt='Racing Decoded' className='h-8 w-8' width={32} height={32} />
 							<div>
 								<h1 className='text-xl sm:text-2xl font-bold'>Racing Decoded</h1>
 							</div>

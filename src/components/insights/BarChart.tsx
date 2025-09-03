@@ -1,12 +1,13 @@
 'use client';
 
-import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface BarData {
 	label: string;
 	value: number;
-	[key: string]: any;
+	[key: string]: string | number;
 }
 
 interface BarChartProps {
@@ -18,28 +19,12 @@ interface BarChartProps {
 	className?: string;
 }
 
-function CustomTooltip({ active, payload, label }: any) {
-	if (active && payload && payload.length) {
-		const data = payload[0].payload;
-		return (
-			<div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
-				<p className="font-medium text-popover-foreground">{label}</p>
-				<div className="space-y-1 mt-2">
-					{Object.entries(data).map(([key, value]) => {
-						if (key === 'label') return null;
-						return (
-							<p key={key} className="text-sm text-muted-foreground">
-								<span className="capitalize">{key.replace(/([A-Z])/g, ' $1').toLowerCase()}: </span>
-								<span className="font-medium">{value}</span>
-							</p>
-						);
-					})}
-				</div>
-			</div>
-		);
-	}
-	return null;
-}
+const chartConfig = {
+	value: {
+		label: 'Value',
+		color: 'var(--chart-1)',
+	},
+};
 
 export function BarChart({
 	data,
@@ -56,30 +41,63 @@ export function BarChart({
 				{description && <p className="text-muted-foreground text-sm">{description}</p>}
 			</CardHeader>
 			<CardContent>
-				<ResponsiveContainer width="100%" height={400}>
-					<RechartsBarChart data={data} margin={{ top: 20, right: 30, left: 60, bottom: 60 }}>
-						<CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+				<ChartContainer config={chartConfig} className="w-full h-[300px] sm:h-[400px]">
+					<RechartsBarChart data={data} margin={{ top: 20, right: 20, bottom: 70, left: 70 }}>
+						<CartesianGrid strokeDasharray="3 3" />
 						<XAxis 
 							dataKey="label"
-							label={{ value: xAxisLabel, position: 'insideBottom', offset: -10, style: { textAnchor: 'middle', fill: 'hsl(var(--muted-foreground))' } }}
-							tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} 
-							tickLine={{ stroke: 'hsl(var(--muted-foreground))' }}
-							axisLine={{ stroke: 'hsl(var(--border))' }}
+							tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
+							tickLine={{ stroke: 'hsl(var(--foreground))', strokeWidth: 1 }}
+							axisLine={{ stroke: 'hsl(var(--foreground))', strokeWidth: 1 }}
+							interval={0}
+							angle={-45}
+							textAnchor="end"
+							height={60}
+							tickMargin={8}
+							label={{ 
+								value: xAxisLabel, 
+								position: 'insideBottom', 
+								offset: -10,
+								style: { 
+									textAnchor: 'middle', 
+									fontSize: '13px', 
+									fill: 'hsl(var(--foreground))',
+									fontWeight: 500
+								} 
+							}}
 						/>
 						<YAxis
-							label={{ value: yAxisLabel, angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: 'hsl(var(--muted-foreground))' } }}
-							tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} 
-							tickLine={{ stroke: 'hsl(var(--muted-foreground))' }}
-							axisLine={{ stroke: 'hsl(var(--border))' }}
+							tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }}
+							tickLine={{ stroke: 'hsl(var(--foreground))', strokeWidth: 1 }}
+							axisLine={{ stroke: 'hsl(var(--foreground))', strokeWidth: 1 }}
+							width={70}
+							tickMargin={8}
+							label={{ 
+								value: yAxisLabel, 
+								angle: -90, 
+								position: 'insideLeft',
+								style: { 
+									textAnchor: 'middle', 
+									fontSize: '13px', 
+									fill: 'hsl(var(--foreground))',
+									fontWeight: 500
+								} 
+							}}
 						/>
-						<Tooltip content={<CustomTooltip />} />
+						<ChartTooltip 
+							content={
+								<ChartTooltipContent
+									formatter={(value, name) => [value, name]}
+								/>
+							}
+						/>
 						<Bar 
 							dataKey="value" 
-							fill="oklch(var(--chart-1))"
+							fill='var(--color-value)'
 							radius={[4, 4, 0, 0]}
 						/>
 					</RechartsBarChart>
-				</ResponsiveContainer>
+				</ChartContainer>
 			</CardContent>
 		</Card>
 	);

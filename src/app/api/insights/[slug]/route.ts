@@ -216,7 +216,7 @@ async function getEraEvolutionData() {
 		const eraTraitAverages = calculateMultiTraitEraAverages(driversData);
 		
 		// Create heatmap data
-		const heatmapData = createTraitEraHeatmap(eraTraitAverages);
+		const heatmapData = createTraitEraHeatmap(eraTraitAverages as Array<{ era: string; [key: string]: number | null | string }>);
 
 		return {
 			eraTraitAverages,
@@ -298,7 +298,7 @@ async function getCircuitDnaData() {
 	}
 }
 
-function calculateEraAverages(scatterData: any[]) {
+function calculateEraAverages(scatterData: Array<{ careerSpan?: string; aggressionScore?: number | null; [key: string]: unknown }>) {
 	// Group drivers by era based on their career span
 	const eraGroups: Record<string, number[]> = {
 		'1950s': [],
@@ -335,18 +335,18 @@ function calculateEraAverages(scatterData: any[]) {
 
 	// Calculate averages for each era
 	return Object.entries(eraGroups)
-		.filter(([_, scores]) => scores.length > 0)
+		.filter(([, scores]) => scores.length > 0)
 		.map(([era, scores]) => ({
 			era,
 			avgAggression: Number((scores.reduce((sum, score) => sum + score, 0) / scores.length).toFixed(1)),
 			driverCount: scores.length,
 		}))
-		.sort((a, b) => a.era.localeCompare(b.era));
+		.sort((a, b) => (a.era as string).localeCompare(b.era as string));
 }
 
-function calculateMultiTraitEraAverages(driversData: any[]) {
+function calculateMultiTraitEraAverages(driversData: Array<{ dnaProfile?: { careerSpan?: string; [key: string]: unknown } | null; [key: string]: unknown }>) {
 	// Group drivers by era based on their career span
-	const eraGroups: Record<string, any[]> = {
+	const eraGroups: Record<string, Array<{ [key: string]: unknown }>> = {
 		'1950s': [],
 		'1960s': [],
 		'1970s': [],
@@ -383,14 +383,14 @@ function calculateMultiTraitEraAverages(driversData: any[]) {
 	const traits = ['aggressionScore', 'consistencyScore', 'racecraftScore', 'pressurePerformanceScore', 'raceStartScore'];
 	
 	return Object.entries(eraGroups)
-		.filter(([_, profiles]) => profiles.length > 0)
+		.filter(([, profiles]) => profiles.length > 0)
 		.map(([era, profiles]) => {
-			const result: any = { era, driverCount: profiles.length };
+			const result: Record<string, number | null | string> = { era, driverCount: profiles.length };
 			
 			traits.forEach(trait => {
 				const values = profiles
-					.map(p => p[trait])
-					.filter(v => v !== null && v !== undefined);
+					.map(p => typeof p[trait] === 'number' ? p[trait] as number : null)
+					.filter((v): v is number => v !== null);
 				
 				if (values.length > 0) {
 					result[trait] = Number((values.reduce((sum, v) => sum + v, 0) / values.length).toFixed(1));
@@ -401,10 +401,10 @@ function calculateMultiTraitEraAverages(driversData: any[]) {
 			
 			return result;
 		})
-		.sort((a, b) => a.era.localeCompare(b.era));
+		.sort((a, b) => (a.era as string).localeCompare(b.era as string));
 }
 
-function createTraitEraHeatmap(eraTraitAverages: any[]) {
+function createTraitEraHeatmap(eraTraitAverages: Array<{ era: string; [key: string]: number | null | string }>) {
 	const traits = [
 		{ key: 'aggressionScore', name: 'Aggression' },
 		{ key: 'consistencyScore', name: 'Consistency' },
@@ -413,16 +413,17 @@ function createTraitEraHeatmap(eraTraitAverages: any[]) {
 		{ key: 'raceStartScore', name: 'Race Start' }
 	];
 
-	const heatmapData: any[] = [];
+	const heatmapData: Array<{ row: string; column: string; value: number; displayValue: string }> = [];
 	
 	eraTraitAverages.forEach(era => {
 		traits.forEach(trait => {
-			if (era[trait.key] !== null) {
+			const value = era[trait.key];
+			if (typeof value === 'number' && value !== null) {
 				heatmapData.push({
-					row: era.era,
+					row: era.era as string,
 					column: trait.name,
-					value: era[trait.key],
-					displayValue: era[trait.key].toFixed(1)
+					value: value,
+					displayValue: value.toFixed(1)
 				});
 			}
 		});
