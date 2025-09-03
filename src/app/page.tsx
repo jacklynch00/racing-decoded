@@ -1,12 +1,12 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, Suspense } from 'react';
 import { useQueryState, parseAsString, parseAsInteger } from 'nuqs';
 import { useDrivers, DriverFilters } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { SearchAndSortControls, DriverCard } from '@/components/drivers';
 
-export default function HomePage() {
+function HomePageContent() {
 	// URL state for all filters and sorting
 	const [searchTerm, setSearchTerm] = useQueryState('search', parseAsString.withDefault(''));
 	const [selectedCountry, setSelectedCountry] = useQueryState('country', parseAsString.withDefault(''));
@@ -334,5 +334,23 @@ export default function HomePage() {
 				</>
 			)}
 		</div>
+	);
+}
+
+export default function HomePage() {
+	return (
+		<Suspense fallback={
+			<div className='space-y-4 sm:space-y-6 px-4 sm:px-0'>
+				<div className='text-center sm:text-left'>
+					<h1 className='text-2xl sm:text-3xl font-bold mb-2'>F1 Driver DNA Profiles</h1>
+					<p className='text-sm sm:text-base text-muted-foreground'>Loading...</p>
+				</div>
+				<div className='flex justify-center items-center min-h-[400px]'>
+					<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary'></div>
+				</div>
+			</div>
+		}>
+			<HomePageContent />
+		</Suspense>
 	);
 }

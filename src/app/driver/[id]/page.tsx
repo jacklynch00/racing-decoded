@@ -14,6 +14,7 @@ import { RadialChart } from '@/components/radial-chart';
 import { FormulaDisplay } from '@/components/formula-display';
 import { DriverAvatar } from '@/components/driver-avatar';
 import { getTraitFormula, TraitFormula } from '@/lib/dna-formulas';
+import { SmartInsights } from '@/components/smart-insights';
 
 function DNAScoreCard({
 	title,
@@ -285,6 +286,9 @@ export default function DriverPage({ params }: { params: Promise<{ id: string }>
 							</CardContent>
 						</Card>
 					</div>
+
+					{/* Smart Insights */}
+					<SmartInsights driver={driver} />
 
 					{/* DNA Score Cards */}
 					<div className='grid gap-4 md:grid-cols-2 lg:grid-cols-5'>
