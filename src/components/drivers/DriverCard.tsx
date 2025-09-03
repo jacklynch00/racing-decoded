@@ -19,7 +19,7 @@ export function DriverCard({ driver }: DriverCardProps) {
 
 	return (
 		<Link href={`/driver/${driver.id}`}>
-			<Card className='cursor-pointer'>
+			<Card className='cursor-pointer h-full flex flex-col'>
 				<CardHeader>
 					<div className='flex items-start gap-3 mb-2'>
 						<DriverAvatar driverId={driver.id} driverName={driver.name} imageUrl={profile.imageUrl} size={48} />
@@ -45,7 +45,7 @@ export function DriverCard({ driver }: DriverCardProps) {
 						</div>
 					</div>
 				</CardHeader>
-				<CardContent>
+				<CardContent className='flex-1 flex flex-col justify-end'>
 					<div className='flex flex-wrap gap-2'>
 						<DNAScoreBadge label='Aggression' score={profile.aggressionScore} />
 						<DNAScoreBadge label='Consistency' score={profile.consistencyScore} />
