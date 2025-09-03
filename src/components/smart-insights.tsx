@@ -3,10 +3,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Lightbulb, TrendingUp, AlertTriangle } from 'lucide-react';
-import type { DriverWithDNA } from '@/lib/types';
+import type { DriverDetails } from '@/lib/types';
 
 interface SmartInsightsProps {
-	driver: DriverWithDNA;
+	driver: DriverDetails;
 }
 
 interface Insight {
@@ -16,7 +16,7 @@ interface Insight {
 	icon: React.ReactNode;
 }
 
-function generateInsights(driver: DriverWithDNA): Insight[] {
+function generateInsights(driver: DriverDetails): Insight[] {
 	const profile = driver.dnaProfile;
 	if (!profile) return [];
 
