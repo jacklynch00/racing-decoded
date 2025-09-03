@@ -36,6 +36,14 @@ export function TrackVisualization({ raceId, driverId }: TrackVisualizationProps
 			setLoading(true);
 			setError(null);
 
+			// Reset all animation state
+			setIsAnimating(false);
+			setIsPaused(false);
+			setCurrentLap(0);
+			setCurrentLapTime(null);
+			setLapProgress(0);
+			setShowPitStop(false);
+
 			try {
 				const response = await fetch(`/api/track-animation/lap-data?raceId=${raceId}&driverId=${driverId}`);
 				if (!response.ok) {
@@ -45,8 +53,9 @@ export function TrackVisualization({ raceId, driverId }: TrackVisualizationProps
 				const data: AnimationData = await response.json();
 				setAnimationData(data);
 
-				// Load data into Canvas animator if initialized
+				// Reset and load data into Canvas animator if initialized
 				if (animatorRef.current) {
+					animatorRef.current.reset();
 					animatorRef.current.loadAnimationData(data);
 				}
 
@@ -226,23 +235,25 @@ export function TrackVisualization({ raceId, driverId }: TrackVisualizationProps
 	}
 
 	return (
-		<div className='space-y-6'>
+		<div className='space-y-4 sm:space-y-6'>
 			{/* Race Information */}
 			<Card>
 				<CardHeader>
-					<div className='flex justify-between items-start'>
-						<div>
-							<CardTitle>
+					<div className='flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4'>
+						<div className='flex-1'>
+							<CardTitle className='text-lg sm:text-xl'>
 								{animationData.raceInfo.raceName} {animationData.raceInfo.year}
 							</CardTitle>
-							<CardDescription>
+							<CardDescription className='text-sm sm:text-base'>
 								{animationData.driverInfo.name} • {animationData.raceInfo.circuitName}
 							</CardDescription>
 						</div>
-						<div className='text-right'>
-							<Badge variant='outline'>Grid: P{animationData.raceResult.gridPosition}</Badge>
+						<div className='flex gap-2'>
+							<Badge variant='outline' className='text-xs'>
+								Grid: P{animationData.raceResult.gridPosition}
+							</Badge>
 							{animationData.raceResult.finishPosition && (
-								<Badge variant='outline' className='ml-2'>
+								<Badge variant='outline' className='text-xs'>
 									Finish: P{animationData.raceResult.finishPosition}
 								</Badge>
 							)}
@@ -254,38 +265,38 @@ export function TrackVisualization({ raceId, driverId }: TrackVisualizationProps
 			{/* Track Visualization */}
 			<Card>
 				<CardHeader>
-					<CardTitle className='flex items-center justify-between'>
-						<span>Live Race Animation</span>
-						<div className='flex items-center gap-4 text-sm'>
+					<div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
+						<CardTitle className='text-lg sm:text-xl'>Live Race Animation</CardTitle>
+						<div className='flex flex-wrap items-center gap-2 text-sm'>
 							{showPitStop && (
-								<Badge variant='secondary' className='animate-pulse'>
+								<Badge variant='secondary' className='animate-pulse text-xs'>
 									🏁 Pit Stop ({pitStopDuration.toFixed(1)}s)
 								</Badge>
 							)}
-							<span className='text-muted-foreground'>
+							<span className='text-muted-foreground text-xs sm:text-sm'>
 								Lap {currentLap} / {totalLaps}
 							</span>
-							{currentLapTime && <span className='font-mono text-muted-foreground'>{currentLapTime.toFixed(3)}s</span>}
+							{currentLapTime && <span className='font-mono text-muted-foreground text-xs sm:text-sm'>{currentLapTime.toFixed(3)}s</span>}
 						</div>
-					</CardTitle>
+					</div>
 				</CardHeader>
 				<CardContent>
-					<div className='flex gap-6 flex-wrap w-full'>
+					<div className='flex flex-col lg:flex-row gap-4 lg:gap-6'>
 						{/* Track Container */}
-						<div className=''>
-							<div className='rounded-lg flex items-center justify-center relative' style={{ width: '100%', height: '500px' }}>
+						<div className='flex-1 flex justify-center'>
+							<div className='rounded-lg flex items-center justify-center relative w-full max-w-[600px]' style={{ aspectRatio: '6/5' }}>
 								<canvas
 									ref={canvasRef}
 									width={600}
 									height={500}
-									className='rounded-lg border border-gray-300'
+									className='w-full h-full'
 									style={{
-										width: '600px',
-										height: '500px',
+										maxWidth: '600px',
+										maxHeight: '500px',
 										display: trackInitialized ? 'block' : 'none',
 									}}
 								/>
-								{!trackInitialized && <p className='text-white absolute inset-0 flex items-center justify-center'>Initializing track...</p>}
+								{!trackInitialized && <p className='text-muted-foreground absolute inset-0 flex items-center justify-center'>Initializing track...</p>}
 							</div>
 
 							{/* Animation Status Overlay */}
@@ -301,7 +312,7 @@ export function TrackVisualization({ raceId, driverId }: TrackVisualizationProps
 						</div>
 
 						{/* Race Controls */}
-						<div className='min-w-fit'>
+						<div className='lg:min-w-[350px] lg:max-w-[400px]'>
 							{trackInitialized && animationData?.animationData.hasLapTimes && (
 								<RaceControls
 									onStart={handleStart}
@@ -324,32 +335,34 @@ export function TrackVisualization({ raceId, driverId }: TrackVisualizationProps
 			</Card>
 
 			{/* Race Statistics */}
-			<div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
+			<div className='grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4'>
 				<Card>
-					<CardContent className='py-4'>
-						<div className='text-2xl font-bold'>{animationData.raceResult.totalLaps}</div>
-						<p className='text-sm text-muted-foreground'>Total Laps</p>
+					<CardContent className='py-3 sm:py-4'>
+						<div className='text-xl sm:text-2xl font-bold'>{animationData.raceResult.totalLaps}</div>
+						<p className='text-xs sm:text-sm text-muted-foreground'>Total Laps</p>
 					</CardContent>
 				</Card>
 
 				<Card>
-					<CardContent className='py-4'>
-						<div className='text-2xl font-bold'>{animationData.raceResult.points}</div>
-						<p className='text-sm text-muted-foreground'>Points Scored</p>
+					<CardContent className='py-3 sm:py-4'>
+						<div className='text-xl sm:text-2xl font-bold'>{animationData.raceResult.points}</div>
+						<p className='text-xs sm:text-sm text-muted-foreground'>Points Scored</p>
 					</CardContent>
 				</Card>
 
 				<Card>
-					<CardContent className='py-4'>
-						<div className='text-2xl font-bold'>{animationData.pitStops.length}</div>
-						<p className='text-sm text-muted-foreground'>Pit Stops</p>
+					<CardContent className='py-3 sm:py-4'>
+						<div className='text-xl sm:text-2xl font-bold'>{animationData.pitStops.length}</div>
+						<p className='text-xs sm:text-sm text-muted-foreground'>Pit Stops</p>
 					</CardContent>
 				</Card>
 
 				<Card>
-					<CardContent className='py-4'>
-						<div className='text-2xl font-bold'>{animationData.animationData.averageLapTime ? `${animationData.animationData.averageLapTime.toFixed(3)}s` : 'N/A'}</div>
-						<p className='text-sm text-muted-foreground'>Average Lap Time</p>
+					<CardContent className='py-3 sm:py-4'>
+						<div className='text-xl sm:text-2xl font-bold'>
+							{animationData.animationData.averageLapTime ? `${animationData.animationData.averageLapTime.toFixed(3)}s` : 'N/A'}
+						</div>
+						<p className='text-xs sm:text-sm text-muted-foreground'>Average Lap Time</p>
 					</CardContent>
 				</Card>
 			</div>

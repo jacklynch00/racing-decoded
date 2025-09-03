@@ -28,9 +28,9 @@ function DNAScoreCard({
 	breakdown: Record<string, unknown> | undefined;
 }) {
 	const getColor = (value: number) => {
-		if (value >= 70) return 'text-green-600';
-		if (value >= 50) return 'text-yellow-600';
-		return 'text-red-600';
+		if (value >= 70) return 'text-green-600 dark:text-green-400';
+		if (value >= 50) return 'text-blue-600 dark:text-blue-400';
+		return 'text-yellow-600 dark:text-yellow-400';
 	};
 
 	const getTraitKey = (title: string) => {
@@ -247,7 +247,7 @@ export default function DriverPage({ params }: { params: Promise<{ id: string }>
 													)}
 													{profile.avgFinishPosition !== null && (
 														<div>
-															<span className='font-medium'>Avg Finish:</span> {profile.avgFinishPosition}
+															<span className='font-medium'>Avg Finish:</span> {profile.avgFinishPosition?.toFixed(2)}
 														</div>
 													)}
 													{profile.bestChampionshipFinish !== null && (

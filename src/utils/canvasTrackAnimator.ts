@@ -178,6 +178,8 @@ export class CanvasF1Animator {
 			this.carPosition = startPos;
 		}
 
+		// Force a complete redraw
+		this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 		this.draw();
 	}
 

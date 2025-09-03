@@ -86,26 +86,47 @@ export function TimelineChart({ data }: TimelineChartProps) {
 						<XAxis dataKey='season' tick={{ fontSize: 12 }} tickLine={{ stroke: '#6b7280' }} />
 						<YAxis domain={[0, 100]} tick={{ fontSize: 12 }} tickLine={{ stroke: '#6b7280' }} />
 						<Tooltip
-							contentStyle={{
-								backgroundColor: '#fff',
-								border: '1px solid hsl(var(--border))',
-								borderRadius: '8px',
-								boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-								padding: '12px',
-							}}
-							formatter={(value: unknown, name: string) => {
-								const nameMap: Record<string, string> = {
-									aggression: 'Aggression',
-									consistency: 'Consistency',
-									racecraft: 'Racecraft',
-									pressure_performance: 'Pressure Performance',
-									race_start: 'Race Start',
-								};
-								return [value !== null ? (value as number).toFixed(1) : 'N/A', nameMap[name] || name];
-							}}
-							labelFormatter={(label, payload) => {
-								const races = payload?.[0]?.payload?.races;
-								return `${label} Season${races ? ` • ${races} races` : ''}`;
+							content={({ active, payload, label }) => {
+								if (active && payload && payload.length) {
+									const races = payload[0]?.payload?.races;
+									const getScoreColor = (score: number | null) => {
+										if (!score) return 'text-muted-foreground';
+										if (score >= 70) return 'text-green-600 dark:text-green-400';
+										if (score >= 50) return 'text-blue-600 dark:text-blue-400';
+										return 'text-yellow-600 dark:text-yellow-400';
+									};
+
+									return (
+										<div className="bg-popover border border-border rounded-lg p-3 shadow-lg">
+											<p className="font-medium text-popover-foreground mb-2">
+												{label} Season{races ? ` • ${races} races` : ''}
+											</p>
+											<div className="space-y-1">
+												{payload.map((entry, index) => {
+													const nameMap: Record<string, string> = {
+														aggression: 'Aggression',
+														consistency: 'Consistency',
+														racecraft: 'Racecraft',
+														pressure_performance: 'Pressure Performance',
+														race_start: 'Race Start',
+													};
+													const score = entry.value as number | null;
+													return (
+														<div key={index} className="flex justify-between items-center gap-2">
+															<span className="text-sm text-popover-foreground">
+																{nameMap[entry.dataKey as string] || entry.dataKey}:
+															</span>
+															<span className={`font-medium ${getScoreColor(score)}`}>
+																{score !== null ? score.toFixed(1) : 'N/A'}
+															</span>
+														</div>
+													);
+												})}
+											</div>
+										</div>
+									);
+								}
+								return null;
 							}}
 						/>
 						<Legend

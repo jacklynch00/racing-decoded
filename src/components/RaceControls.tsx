@@ -69,34 +69,39 @@ export function RaceControls({
 	};
 
 	return (
-		<Card>
+		<Card className='h-fit'>
 			<CardHeader>
-				<CardTitle className='flex items-center gap-2'>
-					<Gauge className='h-5 w-5' />
+				<CardTitle className='flex items-center gap-2 text-base sm:text-lg'>
+					<Gauge className='h-4 w-4 sm:h-5 sm:w-5' />
 					Race Controls
 				</CardTitle>
-				<CardDescription>Control the race animation speed and playback</CardDescription>
+				<CardDescription className='text-sm'>Control the race animation speed and playback</CardDescription>
 			</CardHeader>
-			<CardContent className='space-y-6'>
+			<CardContent className='space-y-4 sm:space-y-6'>
 				{/* Main Control Buttons */}
-				<div className='flex items-center gap-4'>
-					<Button onClick={onStart} disabled={isAnimating && !isPaused} size='lg' className='min-w-[120px]'>
-						<Play className='mr-2 h-4 w-4' />
-						{isPaused ? 'Resume' : 'Start'}
-					</Button>
+				<div className='space-y-3'>
+					{/* Mobile: Full-width stacked buttons */}
+					<div className='flex flex-col gap-2'>
+						<Button onClick={onStart} disabled={isAnimating && !isPaused} size='default' className='w-full justify-center py-3'>
+							<Play className='mr-2 h-4 w-4' />
+							{isPaused ? 'Resume Race' : 'Start Race'}
+						</Button>
 
-					<Button onClick={onPause} disabled={!isAnimating} variant='outline' size='lg'>
-						<Pause className='mr-2 h-4 w-4' />
-						Pause
-					</Button>
+						<div className='flex gap-2'>
+							<Button onClick={onPause} disabled={!isAnimating} variant='outline' size='default' className='flex-1 justify-center py-3'>
+								<Pause className='mr-2 h-4 w-4' />
+								Pause
+							</Button>
 
-					<Button onClick={onReset} variant='outline' size='lg'>
-						<RotateCcw className='mr-2 h-4 w-4' />
-						Reset
-					</Button>
+							<Button onClick={onReset} variant='outline' size='default' className='flex-1 justify-center py-3'>
+								<RotateCcw className='mr-2 h-4 w-4' />
+								Reset
+							</Button>
+						</div>
+					</div>
 
-					{/* Animation Status */}
-					<div className='ml-auto'>
+					{/* Mobile: Animation Status */}
+					<div className='flex sm:hidden justify-center'>
 						<Badge variant={isAnimating ? 'default' : 'secondary'} className='text-sm'>
 							{isAnimating ? (isPaused ? 'Paused' : 'Running') : 'Stopped'}
 						</Badge>
@@ -105,31 +110,32 @@ export function RaceControls({
 
 				{/* Progress Bar */}
 				<div className='space-y-2'>
-					<div className='flex justify-between items-center text-sm'>
+					<div className='flex justify-between items-center text-xs sm:text-sm'>
 						<span className='text-muted-foreground'>Race Progress</span>
 						<span className='font-mono'>
 							{currentLap} / {totalLaps} laps
 						</span>
 					</div>
 					<div className='w-full bg-muted rounded-full h-2'>
-						<div className='bg-primary h-2 rounded-full' style={{ width: `${getOverallProgressPercentage()}%` }} />
+						<div className='bg-primary h-2 rounded-full transition-all duration-300' style={{ width: `${getOverallProgressPercentage()}%` }} />
 					</div>
 					<div className='flex justify-between text-xs text-muted-foreground'>
 						<span>Start</span>
-						<span>{getOverallProgressPercentage().toFixed(1)}% Complete</span>
+						<span className='hidden sm:inline'>{getOverallProgressPercentage().toFixed(1)}% Complete</span>
+						<span className='sm:hidden'>{getOverallProgressPercentage().toFixed(0)}%</span>
 						<span>Finish</span>
 					</div>
 				</div>
 
 				{/* Speed Control */}
-				<div className='space-y-3'>
-					<div className='flex justify-between items-center'>
+				<div className='space-y-2 sm:space-y-3'>
+					<div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2'>
 						<div className='flex items-center gap-2'>
-							<Zap className='h-4 w-4' />
-							<span className='font-medium'>Animation Speed</span>
+							<Zap className='h-3 w-3 sm:h-4 sm:w-4' />
+							<span className='font-medium text-sm sm:text-base'>Animation Speed</span>
 						</div>
-						<Badge variant='outline'>
-							{speed}x {getSpeedLabel(speed)}
+						<Badge variant='outline' className='text-xs w-fit'>
+							{speed}x <span className='hidden sm:inline'>{getSpeedLabel(speed)}</span>
 						</Badge>
 					</div>
 
@@ -137,38 +143,40 @@ export function RaceControls({
 
 					<div className='flex justify-between text-xs text-muted-foreground'>
 						<span>1x</span>
-						<span>2x</span>
-						<span>3x</span>
-						<span>4x</span>
-						<span>5x</span>
+						<span className='hidden sm:inline'>2x</span>
+						<span className='hidden sm:inline'>3x</span>
+						<span className='hidden sm:inline'>4x</span>
+						<span className='hidden sm:inline'>5x</span>
 						<span>6x</span>
 					</div>
 				</div>
 
 				{/* Live Statistics */}
-				<div className='grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t'>
+				<div className='grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-3 sm:pt-4 border-t'>
 					<div className='text-center'>
-						<div className='flex items-center justify-center gap-1 text-sm text-muted-foreground mb-1'>
+						<div className='flex items-center justify-center gap-1 text-xs sm:text-sm text-muted-foreground mb-1'>
 							<Timer className='h-3 w-3' />
-							Current Lap Time
+							<span className='hidden sm:inline'>Current Lap Time</span>
+							<span className='sm:hidden'>Current</span>
 						</div>
-						<div className='font-mono text-lg font-bold'>{formatTime(currentLapTime)}</div>
+						<div className='font-mono text-sm sm:text-lg font-bold'>{formatTime(currentLapTime)}</div>
 					</div>
 
 					<div className='text-center'>
-						<div className='flex items-center justify-center gap-1 text-sm text-muted-foreground mb-1'>
+						<div className='flex items-center justify-center gap-1 text-xs sm:text-sm text-muted-foreground mb-1'>
 							<Gauge className='h-3 w-3' />
-							Average Lap Time
+							<span className='hidden sm:inline'>Average Lap Time</span>
+							<span className='sm:hidden'>Average</span>
 						</div>
-						<div className='font-mono text-lg font-bold'>{formatTime(averageLapTime)}</div>
+						<div className='font-mono text-sm sm:text-lg font-bold'>{formatTime(averageLapTime)}</div>
 					</div>
 
 					<div className='text-center'>
-						<div className='flex items-center justify-center gap-1 text-sm text-muted-foreground mb-1'>
+						<div className='flex items-center justify-center gap-1 text-xs sm:text-sm text-muted-foreground mb-1'>
 							<Flag className='h-3 w-3' />
 							Pit Stops
 						</div>
-						<div className='font-mono text-lg font-bold'>{hasPitStops ? 'Yes' : 'None'}</div>
+						<div className='font-mono text-sm sm:text-lg font-bold'>{hasPitStops ? 'Yes' : 'None'}</div>
 					</div>
 				</div>
 			</CardContent>

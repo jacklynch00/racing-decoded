@@ -2,10 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import { TrackVisualization } from '@/components/TrackVisualization';
 
 // Available tracks (starting with Monaco)
@@ -98,25 +95,24 @@ export default function TrackAnimationPage() {
 	const canStartAnimation = selectedTrack && selectedRace && selectedDriver;
 
 	return (
-		<div className='space-y-6'>
-			{/* Header */}
-			<div className='flex items-center justify-between'>
-				<div>
-					<Link href='/'>
-						<Button variant='outline' size='sm'>
-							<ArrowLeft className='mr-2 h-4 w-4' />
-							Back to drivers
-						</Button>
-					</Link>
-				</div>
-				<div className='text-right'>
-					<h1 className='text-2xl font-bold'>F1 Track Animation</h1>
-					<p className='text-muted-foreground'>Experience races come alive with real lap time data</p>
+		<div className='space-y-4 sm:space-y-6 px-4 sm:px-0'>
+			{/* Title Section */}
+			<div className='space-y-4'>
+				<div className='flex flex-col sm:flex-row items-start gap-4'>
+					<div className='flex-1'>
+						<h1 className='text-2xl sm:text-3xl font-bold mb-2'>
+							<span className='text-3xl sm:text-4xl flex-shrink-0' role='img' aria-label='F1 Track Animation'>
+								🏁
+							</span>
+							F1 Track Animation
+						</h1>
+						<p className='text-sm sm:text-lg text-muted-foreground mb-4'>Replay races with real lap time data</p>
+					</div>
 				</div>
 			</div>
 
 			{/* Selection Flow */}
-			<div className='grid gap-6 lg:grid-cols-3'>
+			<div className='grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3'>
 				{/* Step 1: Track Selection */}
 				<Card className={selectedTrack ? 'border-primary' : ''}>
 					<CardHeader>

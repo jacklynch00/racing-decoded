@@ -64,11 +64,17 @@ export function RadialChart({ data, driverName }: RadialChartProps) {
 						content={({ active, payload }) => {
 							if (active && payload && payload.length) {
 								const data = payload[0].payload;
+								const getScoreColor = (score: number) => {
+									if (score >= 70) return 'text-green-600 dark:text-green-400';
+									if (score >= 50) return 'text-blue-600 dark:text-blue-400';
+									return 'text-yellow-600 dark:text-yellow-400';
+								};
+
 								return (
-									<div className="bg-white border border-gray-200 rounded-lg p-3 shadow-lg max-w-xs">
-										<p className="font-medium text-gray-900 mb-1">{data.trait}</p>
-										<p className="text-lg font-bold text-blue-600 mb-2">{data.score?.toFixed(1)}</p>
-										<p className="text-sm text-gray-600 leading-tight">{data.description}</p>
+									<div className="bg-popover border border-border rounded-lg p-3 shadow-lg max-w-xs">
+										<p className="font-medium text-popover-foreground mb-1">{data.trait}</p>
+										<p className={`text-lg font-bold mb-2 ${getScoreColor(data.score)}`}>{data.score?.toFixed(1)}</p>
+										<p className="text-sm text-muted-foreground leading-tight">{data.description}</p>
 									</div>
 								);
 							}

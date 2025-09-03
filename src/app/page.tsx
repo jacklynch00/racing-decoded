@@ -1,134 +1,136 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { useDrivers } from '@/lib/api';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { useMemo } from 'react';
+import { useQueryState, parseAsString, parseAsInteger } from 'nuqs';
+import { useDrivers, DriverFilters } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Search, Check, ChevronsUpDown, X } from 'lucide-react';
-import { getCountryFlag } from '@/lib/flags';
-import { cn } from '@/lib/utils';
-import { DriverAvatar } from '@/components/driver-avatar';
-import Link from 'next/link';
-import { DriverWithDNA } from '@/lib/types';
-
-// Available countries from the flags mapping
-const countries = [
-	'German',
-	'British',
-	'Spanish',
-	'French',
-	'Italian',
-	'Dutch',
-	'Finnish',
-	'Brazilian',
-	'Australian',
-	'Canadian',
-	'Mexican',
-	'Monégasque',
-	'Austrian',
-	'Belgian',
-	'Danish',
-	'Japanese',
-	'Polish',
-	'Swiss',
-	'Swedish',
-	'Argentine',
-	'South African',
-	'New Zealander',
-	'American',
-	'Chilean',
-	'Colombian',
-	'Venezuelan',
-	'Portuguese',
-	'Thai',
-	'Malaysian',
-	'Indian',
-	'Russian',
-	'Irish',
-	'Hungarian',
-	'Czech',
-	'Uruguayan',
-	'East German',
-	'West German',
-	'Rhodesian',
-	'Yugoslavian',
-].sort();
-
-function DNAScoreBadge({ label, score }: { label: string; score: number | null }) {
-	if (score === null) {
-		return (
-			<Badge variant='outline' className='bg-gray-100 text-gray-600 border-gray-200'>
-				{label}: N/A
-			</Badge>
-		);
-	}
-
-	const getColor = (value: number) => {
-		if (value >= 70) return 'bg-green-100 text-green-800 border-green-200';
-		if (value >= 50) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-		return 'bg-red-100 text-red-800 border-red-200';
-	};
-
-	return (
-		<Badge variant='outline' className={getColor(score)}>
-			{label}: {score.toFixed(1)}
-		</Badge>
-	);
-}
-
-function DriverCard({ driver }: { driver: DriverWithDNA }) {
-	const profile = driver.dnaProfile;
-	const flag = getCountryFlag(driver.nationality);
-
-	if (!profile) {
-		return null; // Skip drivers without DNA profiles
-	}
-
-	return (
-		<Link href={`/driver/${driver.id}`}>
-			<Card className='cursor-pointer hover:shadow-lg transition-shadow'>
-				<CardHeader>
-					<div className='flex items-start gap-3 mb-2'>
-						<DriverAvatar driverId={driver.id} driverName={driver.name} imageUrl={profile.imageUrl} size={48} />
-						<div className='flex-1'>
-							<CardTitle className='flex justify-between items-start mb-1'>
-								{driver.name}
-								{flag && (
-									<span className='text-xl cursor-help transition-transform hover:scale-110' title={driver.nationality || undefined}>
-										{flag}
-									</span>
-								)}
-							</CardTitle>
-							<CardDescription>
-								{profile.racesAnalyzed} races analyzed • {profile.careerSpan}
-							</CardDescription>
-						</div>
-					</div>
-				</CardHeader>
-				<CardContent>
-					<div className='flex flex-wrap gap-2'>
-						<DNAScoreBadge label='Aggression' score={profile.aggressionScore} />
-						<DNAScoreBadge label='Consistency' score={profile.consistencyScore} />
-						<DNAScoreBadge label='Racecraft' score={profile.racecraftScore} />
-						<DNAScoreBadge label='Pressure' score={profile.pressurePerformanceScore} />
-						{profile.clutchFactorScore && <DNAScoreBadge label='Clutch' score={profile.clutchFactorScore} />}
-						<DNAScoreBadge label='Race Start' score={profile.raceStartScore} />
-					</div>
-				</CardContent>
-			</Card>
-		</Link>
-	);
-}
+import { SearchAndSortControls, DriverCard } from '@/components/drivers';
 
 export default function HomePage() {
-	const { data: drivers, isLoading, error } = useDrivers();
-	const [searchTerm, setSearchTerm] = useState('');
-	const [selectedCountry, setSelectedCountry] = useState('');
-	const [countryPopoverOpen, setCountryPopoverOpen] = useState(false);
+	// URL state for all filters and sorting
+	const [searchTerm, setSearchTerm] = useQueryState('search', parseAsString.withDefault(''));
+	const [selectedCountry, setSelectedCountry] = useQueryState('country', parseAsString.withDefault(''));
+
+	// Sorting
+	const [sortBy, setSortBy] = useQueryState('sortBy', parseAsString.withDefault('wins'));
+	const [sortOrder, setSortOrder] = useQueryState('sortOrder', parseAsString.withDefault('desc'));
+
+	// DNA attribute filters
+	const [aggressionMin, setAggressionMin] = useQueryState('aggressionMin', parseAsInteger);
+	const [aggressionMax, setAggressionMax] = useQueryState('aggressionMax', parseAsInteger);
+	const [consistencyMin, setConsistencyMin] = useQueryState('consistencyMin', parseAsInteger);
+	const [consistencyMax, setConsistencyMax] = useQueryState('consistencyMax', parseAsInteger);
+	const [racecraftMin, setRacecraftMin] = useQueryState('racecraftMin', parseAsInteger);
+	const [racecraftMax, setRacecraftMax] = useQueryState('racecraftMax', parseAsInteger);
+	const [pressureMin, setPressureMin] = useQueryState('pressureMin', parseAsInteger);
+	const [pressureMax, setPressureMax] = useQueryState('pressureMax', parseAsInteger);
+	const [raceStartMin, setRaceStartMin] = useQueryState('raceStartMin', parseAsInteger);
+	const [raceStartMax, setRaceStartMax] = useQueryState('raceStartMax', parseAsInteger);
+	const [clutchMin, setClutchMin] = useQueryState('clutchMin', parseAsInteger);
+	const [clutchMax, setClutchMax] = useQueryState('clutchMax', parseAsInteger);
+
+	// Year and races range filters
+	const [yearMin, setYearMin] = useQueryState('yearMin', parseAsInteger);
+	const [yearMax, setYearMax] = useQueryState('yearMax', parseAsInteger);
+	const [racesMin, setRacesMin] = useQueryState('racesMin', parseAsInteger);
+	const [racesMax, setRacesMax] = useQueryState('racesMax', parseAsInteger);
+
+	// Convert individual values back to range tuples for existing components
+	const aggressionRange: [string | number, string | number] = [aggressionMin ?? '', aggressionMax ?? ''];
+	const setAggressionRange = (values: [string | number, string | number]) => {
+		setAggressionMin(values[0] === '' ? null : Number(values[0]));
+		setAggressionMax(values[1] === '' ? null : Number(values[1]));
+	};
+
+	const consistencyRange: [string | number, string | number] = [consistencyMin ?? '', consistencyMax ?? ''];
+	const setConsistencyRange = (values: [string | number, string | number]) => {
+		setConsistencyMin(values[0] === '' ? null : Number(values[0]));
+		setConsistencyMax(values[1] === '' ? null : Number(values[1]));
+	};
+
+	const racecraftRange: [string | number, string | number] = [racecraftMin ?? '', racecraftMax ?? ''];
+	const setRacecraftRange = (values: [string | number, string | number]) => {
+		setRacecraftMin(values[0] === '' ? null : Number(values[0]));
+		setRacecraftMax(values[1] === '' ? null : Number(values[1]));
+	};
+
+	const pressureRange: [string | number, string | number] = [pressureMin ?? '', pressureMax ?? ''];
+	const setPressureRange = (values: [string | number, string | number]) => {
+		setPressureMin(values[0] === '' ? null : Number(values[0]));
+		setPressureMax(values[1] === '' ? null : Number(values[1]));
+	};
+
+	const raceStartRange: [string | number, string | number] = [raceStartMin ?? '', raceStartMax ?? ''];
+	const setRaceStartRange = (values: [string | number, string | number]) => {
+		setRaceStartMin(values[0] === '' ? null : Number(values[0]));
+		setRaceStartMax(values[1] === '' ? null : Number(values[1]));
+	};
+
+	const clutchRange: [string | number, string | number] = [clutchMin ?? '', clutchMax ?? ''];
+	const setClutchRange = (values: [string | number, string | number]) => {
+		setClutchMin(values[0] === '' ? null : Number(values[0]));
+		setClutchMax(values[1] === '' ? null : Number(values[1]));
+	};
+
+	const yearRange: [string | number, string | number] = [yearMin ?? '', yearMax ?? ''];
+	const setYearRange = (values: [string | number, string | number]) => {
+		setYearMin(values[0] === '' ? null : Number(values[0]));
+		setYearMax(values[1] === '' ? null : Number(values[1]));
+	};
+
+	const racesRange: [string | number, string | number] = [racesMin ?? '', racesMax ?? ''];
+	const setRacesRange = (values: [string | number, string | number]) => {
+		setRacesMin(values[0] === '' ? null : Number(values[0]));
+		setRacesMax(values[1] === '' ? null : Number(values[1]));
+	};
+
+	// Build filters object
+	const filters: DriverFilters = useMemo(() => {
+		const f: DriverFilters = {
+			sortBy: sortBy as string,
+			sortOrder: sortOrder as 'asc' | 'desc',
+		};
+
+		if (aggressionMin !== null) f.minAggression = aggressionMin;
+		if (aggressionMax !== null) f.maxAggression = aggressionMax;
+		if (consistencyMin !== null) f.minConsistency = consistencyMin;
+		if (consistencyMax !== null) f.maxConsistency = consistencyMax;
+		if (racecraftMin !== null) f.minRacecraft = racecraftMin;
+		if (racecraftMax !== null) f.maxRacecraft = racecraftMax;
+		if (pressureMin !== null) f.minPressure = pressureMin;
+		if (pressureMax !== null) f.maxPressure = pressureMax;
+		if (raceStartMin !== null) f.minRaceStart = raceStartMin;
+		if (raceStartMax !== null) f.maxRaceStart = raceStartMax;
+		if (clutchMin !== null) f.minClutch = clutchMin;
+		if (clutchMax !== null) f.maxClutch = clutchMax;
+		if (yearMin !== null) f.minYear = yearMin;
+		if (yearMax !== null) f.maxYear = yearMax;
+		if (racesMin !== null) f.minRaces = racesMin;
+		if (racesMax !== null) f.maxRaces = racesMax;
+
+		return f;
+	}, [
+		sortBy,
+		sortOrder,
+		aggressionMin,
+		aggressionMax,
+		consistencyMin,
+		consistencyMax,
+		racecraftMin,
+		racecraftMax,
+		pressureMin,
+		pressureMax,
+		raceStartMin,
+		raceStartMax,
+		clutchMin,
+		clutchMax,
+		yearMin,
+		yearMax,
+		racesMin,
+		racesMax,
+	]);
+
+	const { data: drivers, isLoading, error } = useDrivers(filters);
 
 	const filteredDrivers = useMemo(() => {
 		if (!drivers) return [];
@@ -149,105 +151,187 @@ export default function HomePage() {
 		return filtered;
 	}, [drivers, searchTerm, selectedCountry]);
 
-	if (isLoading) {
-		return (
-			<div className='flex justify-center items-center min-h-[400px]'>
-				<p>Loading drivers...</p>
-			</div>
-		);
-	}
+	// Clear all filters function
+	const clearAllFilters = () => {
+		setSearchTerm('');
+		setSelectedCountry('');
+		setAggressionMin(null);
+		setAggressionMax(null);
+		setConsistencyMin(null);
+		setConsistencyMax(null);
+		setRacecraftMin(null);
+		setRacecraftMax(null);
+		setPressureMin(null);
+		setPressureMax(null);
+		setRaceStartMin(null);
+		setRaceStartMax(null);
+		setClutchMin(null);
+		setClutchMax(null);
+		setYearMin(null);
+		setYearMax(null);
+		setRacesMin(null);
+		setRacesMax(null);
+		setSortBy('wins');
+		setSortOrder('desc');
+	};
 
-	if (error) {
-		return (
-			<div className='flex justify-center items-center min-h-[400px]'>
-				<p className='text-red-500'>Error loading drivers: {error.message}</p>
-			</div>
-		);
-	}
+	// Check if any filters are active
+	const hasActiveFilters: boolean = !!(
+		searchTerm.trim() ||
+		selectedCountry ||
+		aggressionMin !== null ||
+		aggressionMax !== null ||
+		consistencyMin !== null ||
+		consistencyMax !== null ||
+		racecraftMin !== null ||
+		racecraftMax !== null ||
+		pressureMin !== null ||
+		pressureMax !== null ||
+		raceStartMin !== null ||
+		raceStartMax !== null ||
+		clutchMin !== null ||
+		clutchMax !== null ||
+		racesMin !== null ||
+		racesMax !== null ||
+		yearMin !== null ||
+		yearMax !== null ||
+		sortBy !== 'wins' ||
+		sortOrder !== 'desc'
+	);
+
+	// Count active filters for display
+	const activeFiltersCount = [
+		selectedCountry ? 1 : 0,
+		aggressionMin !== null || aggressionMax !== null ? 1 : 0,
+		consistencyMin !== null || consistencyMax !== null ? 1 : 0,
+		racecraftMin !== null || racecraftMax !== null ? 1 : 0,
+		pressureMin !== null || pressureMax !== null ? 1 : 0,
+		raceStartMin !== null || raceStartMax !== null ? 1 : 0,
+		clutchMin !== null || clutchMax !== null ? 1 : 0,
+		racesMin !== null || racesMax !== null ? 1 : 0,
+		yearMin !== null || yearMax !== null ? 1 : 0,
+		sortBy !== 'wins' || sortOrder !== 'desc' ? 1 : 0,
+	].reduce((sum, count) => sum + count, 0);
 
 	return (
-		<div className='space-y-6'>
-			<div>
-				<h1 className='text-3xl font-bold mb-2'>F1 Driver DNA Profiles</h1>
-				<p className='text-muted-foreground'>Explore the personality traits of Formula 1 drivers through data analysis</p>
+		<div className='space-y-4 sm:space-y-6 px-4 sm:px-0'>
+			<div className='text-center sm:text-left'>
+				<h1 className='text-2xl sm:text-3xl font-bold mb-2'>F1 Driver DNA Profiles</h1>
+				<p className='text-sm sm:text-base text-muted-foreground'>Explore the personality traits of Formula 1 drivers</p>
 			</div>
 
-			<div className='flex gap-4'>
-				<div className='relative flex-1'>
-					<Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4' />
-					<Input placeholder='Search drivers by name...' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className='pl-10' />
+			<div className='space-y-4'>
+				{/* Search, Sort, and Filter Controls */}
+				<SearchAndSortControls
+					searchTerm={searchTerm}
+					setSearchTerm={setSearchTerm}
+					sortBy={sortBy}
+					setSortBy={setSortBy}
+					sortOrder={sortOrder}
+					setSortOrder={setSortOrder}
+					hasActiveFilters={hasActiveFilters}
+					activeFiltersCount={activeFiltersCount}
+					selectedCountry={selectedCountry}
+					setSelectedCountry={setSelectedCountry}
+					aggressionRange={aggressionRange}
+					setAggressionRange={setAggressionRange}
+					consistencyRange={consistencyRange}
+					setConsistencyRange={setConsistencyRange}
+					racecraftRange={racecraftRange}
+					setRacecraftRange={setRacecraftRange}
+					pressureRange={pressureRange}
+					setPressureRange={setPressureRange}
+					raceStartRange={raceStartRange}
+					setRaceStartRange={setRaceStartRange}
+					clutchRange={clutchRange}
+					setClutchRange={setClutchRange}
+					yearRange={yearRange}
+					setYearRange={setYearRange}
+					racesRange={racesRange}
+					setRacesRange={setRacesRange}
+					clearAllFilters={clearAllFilters}
+				/>
+			</div>
+
+			{/* Results Count and Driver Cards Section */}
+			{isLoading ? (
+				<div className='flex justify-center items-center min-h-[400px]'>
+					<div className='text-center space-y-2'>
+						<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto'></div>
+						<p className='text-muted-foreground'>Loading drivers...</p>
+					</div>
 				</div>
-
-				<div className='flex-shrink-0'>
-					<Popover open={countryPopoverOpen} onOpenChange={setCountryPopoverOpen}>
-						<PopoverTrigger asChild>
-							<Button variant='outline' role='combobox' aria-expanded={countryPopoverOpen} className='w-[200px] justify-between'>
-								{selectedCountry ? (
-									<span className='flex items-center gap-2'>
-										{getCountryFlag(selectedCountry)}
-										{selectedCountry}
-									</span>
-								) : (
-									'Select nationality...'
-								)}
-								<ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
-							</Button>
-						</PopoverTrigger>
-						<PopoverContent className='w-[200px] p-0'>
-							<Command>
-								<CommandInput placeholder='Search nationality...' />
-								<CommandList>
-									<CommandEmpty>No nationality found.</CommandEmpty>
-									<CommandGroup>
-										{countries.map((country) => (
-											<CommandItem
-												key={country}
-												value={country}
-												onSelect={(currentValue) => {
-													setSelectedCountry(currentValue === selectedCountry ? '' : currentValue);
-													setCountryPopoverOpen(false);
-												}}>
-												<div className='flex items-center gap-2 flex-1'>
-													{getCountryFlag(country)}
-													{country}
-												</div>
-												<Check className={cn('ml-auto h-4 w-4', selectedCountry === country ? 'opacity-100' : 'opacity-0')} />
-											</CommandItem>
-										))}
-									</CommandGroup>
-								</CommandList>
-							</Command>
-						</PopoverContent>
-					</Popover>
-
-					{selectedCountry && (
-						<Button variant='ghost' size='sm' className='ml-2 px-2' onClick={() => setSelectedCountry('')}>
-							<X className='h-4 w-4' />
+			) : error ? (
+				<div className='flex justify-center items-center min-h-[400px]'>
+					<div className='text-center space-y-2'>
+						<p className='text-red-500'>Error loading drivers: {error.message}</p>
+						<Button variant='outline' onClick={() => window.location.reload()}>
+							Try Again
 						</Button>
+					</div>
+				</div>
+			) : (
+				<>
+					{/* Results Count */}
+					<div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 border-b pb-4'>
+						<div>
+							<p className='text-sm text-muted-foreground font-medium'>
+								{filteredDrivers.length} Driver{filteredDrivers.length !== 1 ? 's' : ''} Found
+							</p>
+						</div>
+						{sortBy && (
+							<div className='text-xs sm:text-sm text-muted-foreground'>
+								Sorted by{' '}
+								{sortBy === 'wins'
+									? 'Wins'
+									: sortBy === 'racesAnalyzed'
+									? 'Races Analyzed'
+									: sortBy === 'aggressionScore'
+									? 'Aggression'
+									: sortBy === 'consistencyScore'
+									? 'Consistency'
+									: sortBy === 'racecraftScore'
+									? 'Racecraft'
+									: sortBy === 'pressurePerformanceScore'
+									? 'Pressure Performance'
+									: sortBy === 'raceStartScore'
+									? 'Race Start'
+									: sortBy === 'clutchFactorScore'
+									? 'Clutch Factor'
+									: sortBy === 'nationality'
+									? 'Nationality'
+									: sortBy === 'age'
+									? 'Age'
+									: sortBy === 'name'
+									? 'Name'
+									: sortBy}{' '}
+								({sortOrder === 'desc' ? 'High to Low' : 'Low to High'})
+							</div>
+						)}
+					</div>
+
+					<div className='grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'>
+						{filteredDrivers.map((driver) => (
+							<DriverCard key={driver.id} driver={driver} />
+						))}
+					</div>
+
+					{filteredDrivers.length === 0 && (searchTerm.trim() || selectedCountry || hasActiveFilters) && (
+						<div className='text-center py-12'>
+							<p className='text-muted-foreground'>
+								No drivers found matching the current filters
+								{searchTerm.trim() && ` (name: "${searchTerm}")`}
+								{selectedCountry && ` (nationality: ${selectedCountry})`}
+							</p>
+						</div>
 					)}
-				</div>
-			</div>
 
-			<div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-				{filteredDrivers.map((driver) => (
-					<DriverCard key={driver.id} driver={driver} />
-				))}
-			</div>
-
-			{filteredDrivers.length === 0 && (searchTerm.trim() || selectedCountry) && (
-				<div className='text-center py-12'>
-					<p className='text-muted-foreground'>
-						No drivers found matching the current filters
-						{searchTerm.trim() && ` (name: "${searchTerm}")`}
-						{selectedCountry && ` (nationality: ${selectedCountry})`}
-					</p>
-				</div>
-			)}
-
-			{drivers && drivers.length === 0 && (
-				<div className='text-center py-12'>
-					<p className='text-muted-foreground'>No drivers with DNA profiles found.</p>
-				</div>
+					{drivers && drivers.length === 0 && (
+						<div className='text-center py-12'>
+							<p className='text-muted-foreground'>No drivers with DNA profiles found.</p>
+						</div>
+					)}
+				</>
 			)}
 		</div>
 	);

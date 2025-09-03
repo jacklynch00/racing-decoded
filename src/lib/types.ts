@@ -31,6 +31,8 @@ export interface DriverWithDNA {
   id: number;
   name: string;
   nationality: string | null;
+  age: number | null;
+  dob: Date | null;
   dnaProfile: DriverDnaProfileWithStats | null;
 }
 

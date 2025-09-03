@@ -3,12 +3,47 @@
 import { useQuery } from '@tanstack/react-query';
 import { DriverWithDNA, DriverDetails, TimelineEntry } from './types';
 
+// Types for filter parameters
+export interface DriverFilters {
+	minAggression?: number;
+	maxAggression?: number;
+	minConsistency?: number;
+	maxConsistency?: number;
+	minRacecraft?: number;
+	maxRacecraft?: number;
+	minPressure?: number;
+	maxPressure?: number;
+	minRaceStart?: number;
+	maxRaceStart?: number;
+	minClutch?: number;
+	maxClutch?: number;
+	minRaces?: number;
+	maxRaces?: number;
+	minYear?: number;
+	maxYear?: number;
+	sortBy?: string;
+	sortOrder?: 'asc' | 'desc';
+}
+
 // Fetch all drivers with DNA profiles
-export function useDrivers() {
+export function useDrivers(filters?: DriverFilters) {
+	const queryParams = new URLSearchParams();
+	
+	if (filters) {
+		Object.entries(filters).forEach(([key, value]) => {
+			if (value !== undefined && value !== null && value !== '') {
+				queryParams.append(key, value.toString());
+			}
+		});
+	}
+	
+	const queryString = queryParams.toString();
+	
 	return useQuery<DriverWithDNA[]>({
-		queryKey: ['drivers'],
+		queryKey: ['drivers', filters],
 		queryFn: async () => {
-			const response = await fetch('/api/drivers');
+			const url = queryString ? `/api/drivers?${queryString}` : '/api/drivers';
+			const response = await fetch(url);
 			if (!response.ok) {
 				throw new Error('Failed to fetch drivers');
 			}
