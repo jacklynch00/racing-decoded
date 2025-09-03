@@ -1,15 +1,20 @@
-import { RankingConfig } from '@/lib/rankings-config';
-import { Driver } from '@prisma/client';
+import { getAllRankings } from '@/lib/rankings-config';
+import { prisma } from '@/lib/prisma';
 import { MetadataRoute } from 'next';
 
 async function getAllDriverIds(): Promise<number[]> {
 	try {
-		const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-		const response = await fetch(`${baseUrl}/api/drivers`);
-		if (!response.ok) return [];
-
-		const drivers = await response.json();
-		return drivers.map((driver: Driver) => driver.id);
+		const drivers = await prisma.driver.findMany({
+			where: {
+				dnaProfile: {
+					isNot: null,
+				},
+			},
+			select: {
+				id: true,
+			},
+		});
+		return drivers.map((driver) => driver.id);
 	} catch {
 		return [];
 	}
@@ -17,12 +22,8 @@ async function getAllDriverIds(): Promise<number[]> {
 
 async function getAllRankingSlugs(): Promise<string[]> {
 	try {
-		const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-		const response = await fetch(`${baseUrl}/api/rankings`);
-		if (!response.ok) return [];
-
-		const data = await response.json();
-		return data.allRankings?.map((ranking: RankingConfig) => ranking.slug) || [];
+		const allRankings = getAllRankings();
+		return allRankings.map((ranking) => ranking.slug);
 	} catch {
 		return [];
 	}
