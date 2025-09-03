@@ -1,5 +1,6 @@
 import { getAllRankings } from '@/lib/rankings-config';
-import { prisma } from '@/lib/prisma';
+import { getAllInsights } from '@/lib/insights-config';
+import { prisma } from '@/lib/db';
 import { MetadataRoute } from 'next';
 
 async function getAllDriverIds(): Promise<number[]> {
@@ -29,6 +30,15 @@ async function getAllRankingSlugs(): Promise<string[]> {
 	}
 }
 
+async function getAllInsightSlugs(): Promise<string[]> {
+	try {
+		const allInsights = getAllInsights();
+		return allInsights.map((insight) => insight.slug);
+	} catch {
+		return [];
+	}
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 	const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.racingdecoded.com';
 	const currentDate = new Date();
@@ -36,6 +46,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 	// Get dynamic data
 	const driverIds = await getAllDriverIds();
 	const rankingSlugs = await getAllRankingSlugs();
+	const insightSlugs = await getAllInsightSlugs();
 
 	// Static pages
 	const staticPages: MetadataRoute.Sitemap = [
@@ -47,6 +58,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 		},
 		{
 			url: `${baseUrl}/rankings`,
+			lastModified: currentDate,
+			changeFrequency: 'weekly',
+			priority: 0.9,
+		},
+		{
+			url: `${baseUrl}/insights`,
 			lastModified: currentDate,
 			changeFrequency: 'weekly',
 			priority: 0.9,
@@ -81,5 +98,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 		priority: 0.7,
 	}));
 
-	return [...staticPages, ...driverPages, ...rankingPages];
+	// Insight pages
+	const insightPages: MetadataRoute.Sitemap = insightSlugs.map((slug) => ({
+		url: `${baseUrl}/insights/${slug}`,
+		lastModified: currentDate,
+		changeFrequency: 'weekly' as const,
+		priority: 0.8,
+	}));
+
+	return [...staticPages, ...driverPages, ...rankingPages, ...insightPages];
 }

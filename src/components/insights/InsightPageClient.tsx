@@ -1,0 +1,526 @@
+'use client';
+
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { InsightConfig } from '@/lib/insights-config';
+import { DriverAvatar } from '@/components/driver-avatar';
+import { ScatterPlotChart } from '@/components/insights/ScatterPlotChart';
+import { MultiLineChart } from '@/components/insights/MultiLineChart';
+import { HeatmapChart } from '@/components/insights/HeatmapChart';
+import { BarChart } from '@/components/insights/BarChart';
+import { Lightbulb, TrendingUp, AlertCircle, ArrowRight, ExternalLink } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
+
+interface InsightPageClientProps {
+	config: InsightConfig;
+}
+
+export function InsightPageClient({ config }: InsightPageClientProps) {
+	// Fetch insight data from API
+	const { data: insightData, isLoading, error } = useQuery({
+		queryKey: ['insight', config.slug],
+		queryFn: async () => {
+			const response = await fetch(`/api/insights/${config.slug}`);
+			if (!response.ok) throw new Error('Failed to fetch insight data');
+			return response.json();
+		},
+	});
+	
+	const getInsightIcon = (type: string) => {
+		switch (type) {
+			case 'explanation':
+				return <Lightbulb className='h-4 w-4 text-blue-500' />;
+			case 'highlight':
+				return <TrendingUp className='h-4 w-4 text-green-500' />;
+			case 'caveat':
+				return <AlertCircle className='h-4 w-4 text-yellow-500' />;
+			default:
+				return <Lightbulb className='h-4 w-4 text-blue-500' />;
+		}
+	};
+
+	const renderMainVisualization = () => {
+		if (isLoading) {
+			return (
+				<Card>
+					<CardContent className='h-96 flex items-center justify-center'>
+						<p className='text-muted-foreground'>Loading visualization...</p>
+					</CardContent>
+				</Card>
+			);
+		}
+
+		if (error || !insightData?.data) {
+			return (
+				<Card>
+					<CardContent>
+						<div className='h-96 bg-muted/30 rounded-lg flex items-center justify-center border-2 border-dashed border-muted-foreground/20'>
+							<div className='text-center space-y-2'>
+								<div className='text-6xl'>{config.icon}</div>
+								<p className='text-muted-foreground'>
+									{error ? 'Error loading data' : 'No data available'}
+								</p>
+								<p className='text-sm text-muted-foreground'>
+									{config.visualizations.primary.dataQuery}
+								</p>
+							</div>
+						</div>
+					</CardContent>
+				</Card>
+			);
+		}
+
+		// Render actual visualizations based on data
+		if (config.slug === 'aggression-paradox' && insightData.data.scatterData) {
+			const scatterData = insightData.data.scatterData.map((item: any) => ({
+				...item,
+				x: item.wins || 0,
+				y: item.aggressionScore || 0,
+			}));
+
+			return (
+				<ScatterPlotChart
+					data={scatterData}
+					title={config.visualizations.primary.title}
+					description={config.visualizations.primary.description}
+					xAxisLabel="Career Wins"
+					yAxisLabel="Aggression Score"
+				/>
+			);
+		}
+
+		// Default placeholder for other insights
+		return (
+			<Card>
+				<CardHeader>
+					<CardTitle className='flex items-center gap-2'>
+						<span className='capitalize'>{config.visualizations.primary.type}</span> Chart
+						<Badge variant='outline'>Interactive</Badge>
+					</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<div className='h-96 bg-muted/30 rounded-lg flex items-center justify-center border-2 border-dashed border-muted-foreground/20'>
+						<div className='text-center space-y-2'>
+							<div className='text-6xl'>{config.icon}</div>
+							<p className='text-muted-foreground'>
+								{config.visualizations.primary.type.charAt(0).toUpperCase() + config.visualizations.primary.type.slice(1)} visualization coming soon
+							</p>
+							<p className='text-sm text-muted-foreground'>
+								Data: {config.visualizations.primary.dataQuery}
+							</p>
+						</div>
+					</div>
+				</CardContent>
+			</Card>
+		);
+	};
+
+	return (
+		<div className='space-y-8'>
+			{/* Main Visualization Section */}
+			<div className='space-y-6'>
+				<div className='text-center'>
+					<h2 className='text-2xl font-bold mb-2'>{config.visualizations.primary.title}</h2>
+					<p className='text-muted-foreground'>{config.visualizations.primary.description}</p>
+				</div>
+
+				{renderMainVisualization()}
+			</div>
+
+			{/* Narrative Explanation */}
+			<div className='grid md:grid-cols-2 gap-6'>
+				<Card>
+					<CardHeader>
+						<CardTitle className='flex items-center gap-2'>
+							<Lightbulb className='h-5 w-5 text-yellow-500' />
+							Why This Happens
+						</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<p className='text-muted-foreground leading-relaxed'>
+							{config.narrative.explanation}
+						</p>
+					</CardContent>
+				</Card>
+
+				<Card>
+					<CardHeader>
+						<CardTitle className='flex items-center gap-2'>
+							<TrendingUp className='h-5 w-5 text-green-500' />
+							What This Means
+						</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<p className='text-muted-foreground leading-relaxed'>
+							{config.narrative.implications}
+						</p>
+					</CardContent>
+				</Card>
+			</div>
+
+			{/* Driver Examples */}
+			<div className='space-y-6'>
+				<div className='flex items-center gap-2'>
+					<span className='text-2xl'>👥</span>
+					<h2 className='text-2xl font-bold'>Driver Examples</h2>
+				</div>
+
+				<div className='grid gap-4'>
+					{config.examples.map((example, index) => (
+						<Card key={index} className='border-l-4 border-l-primary'>
+							<CardHeader>
+								<div className='flex items-start gap-4'>
+									<DriverAvatar 
+										driverId={example.driverId} 
+										driverName={example.driverName} 
+										size={48}
+									/>
+									<div className='flex-1'>
+										<CardTitle className='text-lg'>{example.driverName}</CardTitle>
+										<p className='text-muted-foreground mt-1'>{example.explanation}</p>
+									</div>
+									<Link href={`/driver/${example.driverId}`}>
+										<Button variant='ghost' size='sm'>
+											View Profile
+											<ExternalLink className='h-4 w-4 ml-1' />
+										</Button>
+									</Link>
+								</div>
+							</CardHeader>
+							<CardContent>
+								<div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+									{Object.entries(example.stats).map(([key, value]) => (
+										<div key={key} className='text-center p-3 bg-muted/30 rounded-lg'>
+											<div className='text-lg font-bold'>{value}</div>
+											<div className='text-xs text-muted-foreground capitalize'>
+												{key.replace(/([A-Z])/g, ' $1').toLowerCase()}
+											</div>
+										</div>
+									))}
+								</div>
+							</CardContent>
+						</Card>
+					))}
+				</div>
+			</div>
+
+			{/* Supporting Visualizations */}
+			{config.visualizations.supporting.length > 0 && (
+				<div className='space-y-6'>
+					<div className='flex items-center gap-2'>
+						<span className='text-2xl'>📊</span>
+						<h2 className='text-2xl font-bold'>Supporting Analysis</h2>
+					</div>
+
+					<div className='grid gap-6'>
+						{config.visualizations.supporting.map((viz, index) => {
+							const renderSupportingChart = () => {
+								if (isLoading) {
+									return (
+										<div className='h-64 flex items-center justify-center'>
+											<p className='text-muted-foreground'>Loading chart...</p>
+										</div>
+									);
+								}
+
+								if (error || !insightData?.data) {
+									return (
+										<div className='h-64 bg-muted/30 rounded-lg flex items-center justify-center border-2 border-dashed border-muted-foreground/20'>
+											<div className='text-center space-y-2'>
+												<div className='text-4xl'>📈</div>
+												<p className='text-muted-foreground'>
+													{error ? 'Error loading data' : 'No data available'}
+												</p>
+											</div>
+										</div>
+									);
+								}
+
+								// Render specific charts based on insight and chart type
+								if (config.slug === 'aggression-paradox') {
+									if (viz.type === 'bar' && insightData.data.aggByWinRange) {
+										return (
+											<BarChart
+												data={insightData.data.aggByWinRange.map((item: any) => ({
+													label: item.label,
+													value: item.avgAggression,
+													count: item.count,
+													avgAggression: item.avgAggression,
+												}))}
+												title={viz.title}
+												description={viz.description}
+												xAxisLabel="Win Range Groups"
+												yAxisLabel="Average Aggression Score"
+											/>
+										);
+									}
+									if (viz.type === 'line' && insightData.data.eraAverages) {
+										return (
+											<MultiLineChart
+												data={insightData.data.eraAverages}
+												title={viz.title}
+												description={viz.description}
+												xAxisLabel="Era"
+												yAxisLabel="Average Aggression Score"
+												lines={[
+													{
+														key: 'avgAggression',
+														label: 'Aggression Score',
+														color: 'oklch(var(--chart-1))'
+													}
+												]}
+											/>
+										);
+									}
+								}
+
+								if (config.slug === 'consistency-trap') {
+									if (viz.type === 'scatter' && insightData.data.scatterData) {
+										// For consistency trap, we need different scatter data
+										if (viz.title.includes('Championships')) {
+											// Main chart: Consistency vs Championships (we don't have championship data yet)
+											return (
+												<ScatterPlotChart
+													data={insightData.data.scatterData.map((item: any) => ({
+														...item,
+														x: item.consistencyScore || 0,
+														y: item.wins || 0, // Using wins as proxy for success
+													}))}
+													title={viz.title}
+													description={viz.description}
+													xAxisLabel="Consistency Score"
+													yAxisLabel="Career Wins"
+												/>
+											);
+										} else {
+											// Win Rate chart
+											return (
+												<ScatterPlotChart
+													data={insightData.data.scatterData.map((item: any) => ({
+														...item,
+														x: item.consistencyScore || 0,
+														y: item.winRate || 0,
+													}))}
+													title={viz.title}
+													description={viz.description}
+													xAxisLabel="Consistency Score"
+													yAxisLabel="Win Rate (%)"
+												/>
+											);
+										}
+									}
+									if (viz.type === 'bar' && insightData.data.scatterData) {
+										// Group consistency data by ranges
+										const consistencyRanges = [
+											{ min: 0, max: 50, label: 'Low (0-50)' },
+											{ min: 50, max: 60, label: 'Moderate (50-60)' },
+											{ min: 60, max: 70, label: 'Good (60-70)' },
+											{ min: 70, max: 80, label: 'High (70-80)' },
+											{ min: 80, max: 100, label: 'Ultra-High (80+)' },
+										];
+
+										const consistencyByRange = consistencyRanges.map((range) => {
+											const driversInRange = insightData.data.scatterData.filter(
+												(d: any) => d.consistencyScore >= range.min && d.consistencyScore < range.max
+											);
+											const avgWins = driversInRange.length > 0
+												? driversInRange.reduce((sum: number, d: any) => sum + (d.wins || 0), 0) / driversInRange.length
+												: 0;
+
+											return {
+												label: range.label,
+												value: Number(avgWins.toFixed(1)),
+												count: driversInRange.length,
+												avgWins: Number(avgWins.toFixed(1)),
+											};
+										});
+
+										return (
+											<BarChart
+												data={consistencyByRange}
+												title={viz.title}
+												description={viz.description}
+												xAxisLabel="Consistency Score Range"
+												yAxisLabel="Average Career Wins"
+											/>
+										);
+									}
+								}
+
+								if (config.slug === 'era-evolution') {
+									if (viz.type === 'line' && insightData.data.eraTraitAverages) {
+										return (
+											<MultiLineChart
+												data={insightData.data.eraTraitAverages}
+												title={viz.title}
+												description={viz.description}
+												xAxisLabel="Era"
+												yAxisLabel="Average Score"
+												lines={[
+													{
+														key: 'aggressionScore',
+														label: 'Aggression',
+														color: 'oklch(var(--chart-1))'
+													},
+													{
+														key: 'consistencyScore',
+														label: 'Consistency',
+														color: 'oklch(var(--chart-2))'
+													},
+													{
+														key: 'racecraftScore',
+														label: 'Racecraft',
+														color: 'oklch(var(--chart-3))'
+													},
+													{
+														key: 'pressurePerformanceScore',
+														label: 'Pressure Performance',
+														color: 'oklch(var(--chart-4))'
+													},
+													{
+														key: 'raceStartScore',
+														label: 'Race Start',
+														color: 'oklch(var(--chart-5))'
+													}
+												]}
+											/>
+										);
+									}
+									if (viz.type === 'heatmap' && insightData.data.heatmapData) {
+										return (
+											<HeatmapChart
+												data={insightData.data.heatmapData}
+												title={viz.title}
+												description={viz.description}
+												rowLabel="Era"
+												columnLabel="DNA Trait"
+											/>
+										);
+									}
+								}
+
+								if (config.slug === 'circuit-dna') {
+									if (viz.type === 'heatmap' && insightData.data.circuitTraitCorrelations) {
+										return (
+											<HeatmapChart
+												data={insightData.data.circuitTraitCorrelations}
+												title={viz.title}
+												description={viz.description}
+												rowLabel="Circuit"
+												columnLabel="DNA Trait Correlation"
+												minValue={0}
+												maxValue={100}
+											/>
+										);
+									}
+									if (viz.type === 'scatter' && insightData.data.monacoRacecraftData) {
+										return (
+											<ScatterPlotChart
+												data={insightData.data.monacoRacecraftData.map((item: any) => ({
+													...item,
+													x: item.racecraftScore || 0,
+													y: item.monacoSuccessRate || 0,
+												}))}
+												title={viz.title}
+												description={viz.description}
+												xAxisLabel="Racecraft Score"
+												yAxisLabel="Monaco Success Rate (%)"
+											/>
+										);
+									}
+								}
+
+								// Default placeholder
+								return (
+									<div className='h-64 bg-muted/30 rounded-lg flex items-center justify-center border-2 border-dashed border-muted-foreground/20'>
+										<div className='text-center space-y-2'>
+											<div className='text-4xl'>📈</div>
+											<p className='text-muted-foreground'>
+												{viz.type.charAt(0).toUpperCase() + viz.type.slice(1)} chart coming soon
+											</p>
+										</div>
+									</div>
+								);
+							};
+
+							return (
+								<Card key={index}>
+									<CardHeader>
+										<CardTitle className='flex items-center gap-2'>
+											{viz.title}
+											<Badge variant='outline' className='capitalize'>{viz.type}</Badge>
+										</CardTitle>
+										<p className='text-muted-foreground'>{viz.description}</p>
+									</CardHeader>
+									<CardContent>
+										{renderSupportingChart()}
+									</CardContent>
+								</Card>
+							);
+						})}
+					</div>
+				</div>
+			)}
+
+			{/* Methodology */}
+			<Card className='bg-muted/20'>
+				<CardHeader>
+					<CardTitle className='flex items-center gap-2'>
+						<span className='text-xl'>🔬</span>
+						Methodology
+					</CardTitle>
+				</CardHeader>
+				<CardContent className='space-y-4'>
+					<div>
+						<h4 className='font-semibold mb-2'>Data Sources</h4>
+						<div className='flex flex-wrap gap-2'>
+							{config.dataSources.map((source) => (
+								<Badge key={source} variant='secondary'>{source}</Badge>
+							))}
+						</div>
+					</div>
+					<div>
+						<h4 className='font-semibold mb-2'>Analysis Methods</h4>
+						<div className='flex flex-wrap gap-2'>
+							{config.chartTypes.map((chart) => (
+								<Badge key={chart} variant='outline' className='capitalize'>{chart} Analysis</Badge>
+							))}
+						</div>
+					</div>
+					<p className='text-sm text-muted-foreground'>
+						This analysis uses comprehensive F1 data including race results, qualifying positions, driver DNA profiles, and career statistics. 
+						Statistical correlations and trend analysis reveal patterns that might not be immediately obvious from traditional metrics.
+					</p>
+				</CardContent>
+			</Card>
+
+			{/* Related Insights */}
+			<Card>
+				<CardHeader>
+					<CardTitle className='flex items-center gap-2'>
+						<span className='text-xl'>🔗</span>
+						Explore More Insights
+					</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<div className='flex flex-wrap gap-2'>
+						<Link href='/insights'>
+							<Button variant='outline'>
+								View All Insights
+								<ArrowRight className='h-4 w-4 ml-1' />
+							</Button>
+						</Link>
+						<Link href='/rankings'>
+							<Button variant='outline'>
+								Driver Rankings
+								<ArrowRight className='h-4 w-4 ml-1' />
+							</Button>
+						</Link>
+					</div>
+				</CardContent>
+			</Card>
+		</div>
+	);
+}

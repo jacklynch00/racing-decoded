@@ -11,6 +11,7 @@ import { ModeToggle } from './mode-toggle';
 const navItems = [
 	{ href: '/', label: 'Drivers' },
 	{ href: '/rankings', label: 'Rankings' },
+	{ href: '/insights', label: 'Insights' },
 	{ href: '/track-animation', label: 'Track Animation' },
 ];
 
