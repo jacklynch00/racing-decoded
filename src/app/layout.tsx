@@ -21,15 +21,11 @@ export default function RootLayout({
 	return (
 		<html lang='en' suppressHydrationWarning>
 			<head>
+				<meta name='apple-mobile-web-app-title' content='RD' />
 				<script defer data-website-id='68b79f911a49c66777e60bf9' data-domain='racingdecoded.com' src='https://datafa.st/js/script.js'></script>
 			</head>
 			<body className={inter.className}>
-				<ThemeProvider
-					attribute="class"
-					defaultTheme="system"
-					enableSystem
-					disableTransitionOnChange
-				>
+				<ThemeProvider attribute='class' defaultTheme='system' enableSystem disableTransitionOnChange>
 					<ReactQueryProvider>
 						<NuqsAdapter>
 							<div className='min-h-screen bg-background'>

@@ -24,8 +24,11 @@ export function MobileNav() {
 				<div className='flex justify-between items-center'>
 					{/* Logo/Title */}
 					<div>
-						<Link href='/' className='block'>
-							<h1 className='text-xl sm:text-2xl font-bold'>Racing Decoded</h1>
+						<Link href='/' className='flex items-center gap-3'>
+							<img src='/racing-decoded.png' alt='Racing Decoded' className='h-8 w-8' />
+							<div>
+								<h1 className='text-xl sm:text-2xl font-bold'>Racing Decoded</h1>
+							</div>
 						</Link>
 					</div>
 
