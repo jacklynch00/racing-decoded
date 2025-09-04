@@ -1,61 +1,39 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { getAllInsights, insightCategories } from '@/lib/insights-config';
-import { Lightbulb } from 'lucide-react';
+import { getAllInsights } from '@/lib/insights-config';
 
 export function InsightsPageClient() {
 	const allInsights = getAllInsights();
-
 
 	return (
 		<div className='space-y-8'>
 			{/* All Insights */}
 			<div className='space-y-6'>
-				<div className='flex items-center gap-2'>
-					<Lightbulb className='h-6 w-6 text-yellow-500' />
-					<h2 className='text-2xl font-bold'>All Insights</h2>
-				</div>
-
-				<div className='grid gap-6'>
+				<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6'>
 					{allInsights.map((insight) => (
 						<Link key={insight.slug} href={`/insights/${insight.slug}`}>
-							<Card className='cursor-pointer transition-all hover:shadow-lg border-l-4 border-l-transparent hover:border-l-primary'>
-								<CardHeader>
-									<div className='flex items-start justify-between gap-4'>
-										<div className='space-y-2 flex-1'>
-											<div className='flex items-center gap-3'>
-												<span className='text-2xl'>{insight.icon}</span>
-												<div>
-													<CardTitle className='text-xl hover:text-primary transition-colors'>
-														{insight.title}
-													</CardTitle>
-													<div className='flex items-center gap-2 mt-1'>
-														<Badge variant='outline' className='text-xs'>
-															{insightCategories[insight.category].name}
-														</Badge>
-														<div className='flex gap-1'>
-															{insight.chartTypes.map((chartType) => (
-																<Badge key={chartType} variant='secondary' className='text-xs capitalize'>
-																	{chartType}
-																</Badge>
-															))}
-														</div>
-													</div>
-												</div>
-											</div>
-											<CardDescription className='text-base leading-relaxed'>
-												{insight.description}
-											</CardDescription>
+							<Card className='cursor-pointer transition-all hover:shadow-lg border-l-4 border-l-transparent hover:border-l-primary h-full'>
+								<CardHeader className='pb-3'>
+									<div className='flex items-start gap-3'>
+										<div className='flex-1 min-w-0'>
+											<CardTitle className='text-lg hover:text-primary transition-colors leading-tight'>{insight.title}</CardTitle>
 										</div>
 									</div>
 								</CardHeader>
-								<CardContent>
-									<div className='p-3 bg-muted/50 rounded-lg'>
-										<p className='text-sm italic'>&ldquo;{insight.narrative.hook}&rdquo;</p>
-									</div>
+								<CardContent className='pt-0'>
+									<CardDescription
+										className='text-sm leading-relaxed mb-3 overflow-hidden'
+										style={{
+											display: '-webkit-box',
+											WebkitLineClamp: 3,
+											WebkitBoxOrient: 'vertical',
+											lineHeight: '1.4em',
+											maxHeight: '4.2em',
+										}}>
+										{insight.description}
+									</CardDescription>
 								</CardContent>
 							</Card>
 						</Link>

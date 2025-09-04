@@ -46,34 +46,34 @@ function RankingValueBadge({ value, unit, category }: { value: number | null; un
 			if (val >= 80) {
 				return {
 					variant: 'outline' as const,
-					className: 'border-green-500 bg-green-50 text-green-800 dark:border-green-400 dark:bg-green-950 dark:text-green-300'
+					className: 'border-green-500 bg-green-50 text-green-800 dark:border-green-400 dark:bg-green-950 dark:text-green-300',
 				};
 			}
 			if (val >= 60) {
 				return {
 					variant: 'outline' as const,
-					className: 'border-blue-500 bg-blue-50 text-blue-800 dark:border-blue-400 dark:bg-blue-950 dark:text-blue-300'
+					className: 'border-blue-500 bg-blue-50 text-blue-800 dark:border-blue-400 dark:bg-blue-950 dark:text-blue-300',
 				};
 			}
 			if (val >= 40) {
 				return {
 					variant: 'outline' as const,
-					className: 'border-yellow-500 bg-yellow-50 text-yellow-800 dark:border-yellow-400 dark:bg-yellow-950 dark:text-yellow-300'
+					className: 'border-yellow-500 bg-yellow-50 text-yellow-800 dark:border-yellow-400 dark:bg-yellow-950 dark:text-yellow-300',
 				};
 			}
 			return {
 				variant: 'secondary' as const,
-				className: ''
+				className: '',
 			};
 		}
 		return {
 			variant: 'default' as const,
-			className: ''
+			className: '',
 		};
 	};
 
 	const { variant, className } = getBadgeProps(value, category);
-	const displayValue = category === 'dna' ? value.toFixed(1) : value;
+	const displayValue = value.toFixed(1);
 
 	return (
 		<Badge variant={variant} className={className}>
@@ -280,9 +280,6 @@ export function RankingPageClient() {
 			{/* Title Section */}
 			<div className='space-y-4'>
 				<div className='flex flex-col sm:flex-row items-start gap-4'>
-					<span className='text-3xl sm:text-4xl flex-shrink-0' role='img' aria-label={data.ranking.title}>
-						{data.ranking.icon}
-					</span>
 					<div className='flex-1'>
 						<h1 className='text-2xl sm:text-3xl font-bold mb-2'>{data.ranking.title}</h1>
 						<p className='text-sm sm:text-lg text-muted-foreground mb-4'>{data.ranking.description}</p>

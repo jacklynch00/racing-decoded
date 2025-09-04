@@ -5,9 +5,9 @@ export interface InsightConfig {
 	metaTitle: string;
 	metaDescription: string;
 	category: 'paradox' | 'evolution' | 'relationship' | 'performance';
-	icon: string;
 	chartTypes: ('scatter' | 'line' | 'heatmap' | 'bar' | 'correlation')[];
 	dataSources: string[]; // Tables/fields needed for analysis
+	dnaTraitsUsed?: string[]; // DNA traits analyzed in this insight
 	narrative: {
 		hook: string; // The surprising finding
 		explanation: string; // Why this happens
@@ -41,37 +41,39 @@ export const insightsConfig: Record<string, InsightConfig> = {
 		title: 'The Aggression Paradox',
 		description: 'Why F1 champions score surprisingly low on aggression - the pole position effect.',
 		metaTitle: 'The Aggression Paradox: Why F1 Champions Score Low on Aggression',
-		metaDescription: 'Discover why successful F1 drivers like Max Verstappen have lower aggression scores. The surprising data reveals how pole positions create the aggression paradox.',
+		metaDescription:
+			'Discover why successful F1 drivers like Max Verstappen have lower aggression scores. The surprising data reveals how pole positions create the aggression paradox.',
 		category: 'paradox',
-		icon: '⚡',
 		chartTypes: ['scatter', 'bar'],
 		dataSources: ['drivers_dna_profiles', 'results', 'qualifying'],
+		dnaTraitsUsed: ['aggression'],
 		narrative: {
-			hook: 'Max Verstappen, one of F1\'s most aggressive drivers, scores just 48.1/100 on aggression. How is this possible?',
-			explanation: 'Champions start from pole position more often, reducing opportunities for aggressive overtaking moves. Their low aggression scores reflect dominance, not passivity.',
-			implications: 'This reveals a fundamental flaw in traditional racing metrics - success can actually lower your "aggression" rating.'
+			hook: "Max Verstappen, one of F1's most aggressive drivers, scores just 48.1/100 on aggression. How is this possible?",
+			explanation:
+				'Champions start from pole position more often, reducing opportunities for aggressive overtaking moves. Their low aggression scores reflect dominance, not passivity.',
+			implications: 'This reveals a fundamental flaw in traditional racing metrics - success can actually lower your "aggression" rating.',
 		},
 		visualizations: {
 			primary: {
 				type: 'scatter',
 				title: 'Career Wins vs Aggression Score',
 				description: 'The inverse relationship between race wins and aggression scores',
-				dataQuery: 'wins vs aggressionScore with era color coding'
+				dataQuery: 'wins vs aggressionScore with era color coding',
 			},
 			supporting: [
 				{
 					type: 'bar',
 					title: 'Average Grid Position by Aggression Score',
 					description: 'How starting position affects aggression measurements',
-					dataQuery: 'average qualifying position by aggression score ranges'
+					dataQuery: 'average qualifying position by aggression score ranges',
 				},
 				{
 					type: 'line',
 					title: 'Aggression Score by Era',
 					description: 'How racing eras affect aggression measurements',
-					dataQuery: 'average aggression score by decade/era'
-				}
-			]
+					dataQuery: 'average aggression score by decade/era',
+				},
+			],
 		},
 		examples: [
 			{
@@ -82,8 +84,8 @@ export const insightsConfig: Record<string, InsightConfig> = {
 					aggressionScore: 48.1,
 					wins: 63,
 					avgGridPosition: 2.1,
-					overtakesPerRace: 1.2
-				}
+					overtakesPerRace: 1.2,
+				},
 			},
 			{
 				driverName: 'Michele Alboreto',
@@ -93,10 +95,10 @@ export const insightsConfig: Record<string, InsightConfig> = {
 					aggressionScore: 91.4,
 					wins: 5,
 					avgGridPosition: 8.3,
-					overtakesPerRace: 4.7
-				}
-			}
-		]
+					overtakesPerRace: 4.7,
+				},
+			},
+		],
 	},
 	'consistency-trap': {
 		slug: 'consistency-trap',
@@ -105,35 +107,35 @@ export const insightsConfig: Record<string, InsightConfig> = {
 		metaTitle: 'The Consistency Trap: Why Perfect Consistency Prevents Championships',
 		metaDescription: 'Analysis reveals why ultra-consistent F1 drivers struggle to win titles. Discover why champions need calculated inconsistency to succeed.',
 		category: 'paradox',
-		icon: '🎯',
 		chartTypes: ['scatter', 'bar'],
 		dataSources: ['drivers_dna_profiles', 'driver_standings', 'results'],
+		dnaTraitsUsed: ['consistency'],
 		narrative: {
 			hook: 'Drivers with 90+ consistency scores have won just 12% of all championships. Perfect consistency is actually a weakness.',
 			explanation: 'Ultra-consistent drivers avoid the calculated risks needed for race wins. Champions balance consistency with strategic aggression.',
-			implications: 'This challenges conventional wisdom that consistency alone wins championships in Formula 1.'
+			implications: 'This challenges conventional wisdom that consistency alone wins championships in Formula 1.',
 		},
 		visualizations: {
 			primary: {
 				type: 'scatter',
 				title: 'Consistency Score vs Championships Won',
 				description: 'The inverse relationship between perfect consistency and title success',
-				dataQuery: 'consistencyScore vs championship wins'
+				dataQuery: 'consistencyScore vs championship wins',
 			},
 			supporting: [
 				{
 					type: 'bar',
 					title: 'Championship Wins by Consistency Range',
 					description: 'How consistency levels correlate with title success',
-					dataQuery: 'championship wins grouped by consistency score ranges'
+					dataQuery: 'championship wins grouped by consistency score ranges',
 				},
 				{
 					type: 'scatter',
 					title: 'Risk vs Reward: Consistency vs Win Rate',
 					description: 'The trade-off between consistency and race victories',
-					dataQuery: 'consistencyScore vs win percentage'
-				}
-			]
+					dataQuery: 'consistencyScore vs win percentage',
+				},
+			],
 		},
 		examples: [
 			{
@@ -144,8 +146,8 @@ export const insightsConfig: Record<string, InsightConfig> = {
 					consistencyScore: 94.2,
 					wins: 11,
 					championships: 0,
-					winRate: 3.4
-				}
+					winRate: 3.4,
+				},
 			},
 			{
 				driverName: 'Michael Schumacher',
@@ -155,10 +157,10 @@ export const insightsConfig: Record<string, InsightConfig> = {
 					consistencyScore: 76.8,
 					wins: 91,
 					championships: 7,
-					winRate: 29.8
-				}
-			}
-		]
+					winRate: 29.8,
+				},
+			},
+		],
 	},
 	'era-evolution': {
 		slug: 'era-evolution',
@@ -167,35 +169,35 @@ export const insightsConfig: Record<string, InsightConfig> = {
 		metaTitle: 'Evolution of F1 Driver DNA: How Racing Personalities Changed Over Decades',
 		metaDescription: 'Comprehensive analysis of how F1 driver characteristics evolved from the 1970s to modern era. See how aggression, racecraft, and consistency changed.',
 		category: 'evolution',
-		icon: '📈',
 		chartTypes: ['line', 'heatmap'],
 		dataSources: ['drivers_dna_profiles', 'drivers_dna_timeline'],
+		dnaTraitsUsed: ['aggression', 'consistency', 'racecraft', 'pressure_performance'],
 		narrative: {
 			hook: '1970s F1 drivers averaged 73.2 aggression. 2020s drivers average just 41.8. The sport has fundamentally changed who succeeds.',
 			explanation: 'Aerodynamic sensitivity, tire management, and strategy have replaced wheel-to-wheel combat as the path to victory.',
-			implications: 'Modern F1 rewards different personality traits than classic racing, creating entirely different driver archetypes.'
+			implications: 'Modern F1 rewards different personality traits than classic racing, creating entirely different driver archetypes.',
 		},
 		visualizations: {
 			primary: {
 				type: 'line',
 				title: 'Average DNA Traits by Era',
 				description: 'How each trait has evolved across F1 decades',
-				dataQuery: 'average DNA scores by era for all traits'
+				dataQuery: 'average DNA scores by era for all traits',
 			},
 			supporting: [
 				{
 					type: 'heatmap',
 					title: 'Era vs Trait Heatmap',
 					description: 'Visual representation of trait dominance by era',
-					dataQuery: 'heatmap of trait scores across eras'
+					dataQuery: 'heatmap of trait scores across eras',
 				},
 				{
 					type: 'bar',
 					title: 'Championship-Winning Traits by Era',
 					description: 'Which traits mattered most for success in each era',
-					dataQuery: 'average trait scores of champions by era'
-				}
-			]
+					dataQuery: 'average trait scores of champions by era',
+				},
+			],
 		},
 		examples: [
 			{
@@ -206,8 +208,8 @@ export const insightsConfig: Record<string, InsightConfig> = {
 					era: '1970s',
 					aggressionScore: 84.1,
 					consistencyScore: 52.3,
-					racecraftScore: 78.9
-				}
+					racecraftScore: 78.9,
+				},
 			},
 			{
 				driverName: 'Lewis Hamilton',
@@ -217,10 +219,10 @@ export const insightsConfig: Record<string, InsightConfig> = {
 					era: '2000s-2020s',
 					aggressionScore: 45.1,
 					consistencyScore: 83.7,
-					racecraftScore: 91.2
-				}
-			}
-		]
+					racecraftScore: 91.2,
+				},
+			},
+		],
 	},
 	'circuit-dna': {
 		slug: 'circuit-dna',
@@ -229,35 +231,35 @@ export const insightsConfig: Record<string, InsightConfig> = {
 		metaTitle: 'Circuit DNA: Which F1 Tracks Favor Aggressive vs Consistent Drivers',
 		metaDescription: 'Data analysis reveals which circuits reward aggression, consistency, or racecraft. Discover why Monaco favors different drivers than Monza.',
 		category: 'relationship',
-		icon: '🏎️',
 		chartTypes: ['heatmap', 'scatter'],
 		dataSources: ['drivers_dna_profiles', 'results', 'circuits'],
+		dnaTraitsUsed: ['racecraft', 'aggression', 'consistency'],
 		narrative: {
 			hook: 'Monaco rewards racecraft (correlation: +0.73). Monza rewards aggression (+0.68). Each circuit has a personality preference.',
 			explanation: 'Track characteristics create natural advantages for certain driver types. Street circuits favor precision, power tracks favor risk-taking.',
-			implications: 'Understanding circuit DNA could revolutionize driver-track matching and setup strategies.'
+			implications: 'Understanding circuit DNA could revolutionize driver-track matching and setup strategies.',
 		},
 		visualizations: {
 			primary: {
 				type: 'heatmap',
 				title: 'Circuit vs DNA Trait Correlation',
 				description: 'Which traits lead to success at each circuit',
-				dataQuery: 'correlation between trait scores and finishing positions by circuit'
+				dataQuery: 'correlation between trait scores and finishing positions by circuit',
 			},
 			supporting: [
 				{
 					type: 'scatter',
 					title: 'Monaco: Racecraft vs Success Rate',
 					description: 'How racecraft score predicts Monaco performance',
-					dataQuery: 'racecraft score vs Monaco results'
+					dataQuery: 'racecraft score vs Monaco results',
 				},
 				{
 					type: 'bar',
 					title: 'Track Type Preferences',
 					description: 'How circuit categories favor different traits',
-					dataQuery: 'average trait correlations by track type (street, permanent, temporary)'
-				}
-			]
+					dataQuery: 'average trait correlations by track type (street, permanent, temporary)',
+				},
+			],
 		},
 		examples: [
 			{
@@ -268,8 +270,8 @@ export const insightsConfig: Record<string, InsightConfig> = {
 					racecraftScore: 94.2,
 					monacoWins: 6,
 					monacoWinRate: 50.0,
-					overallWinRate: 25.3
-				}
+					overallWinRate: 25.3,
+				},
 			},
 			{
 				driverName: 'Lewis Hamilton',
@@ -279,33 +281,29 @@ export const insightsConfig: Record<string, InsightConfig> = {
 					racecraftScore: 91.2,
 					monacoWins: 3,
 					monacoWinRate: 20.0,
-					overallWinRate: 32.1
-				}
-			}
-		]
-	}
+					overallWinRate: 32.1,
+				},
+			},
+		],
+	},
 };
 
 export const insightCategories = {
 	paradox: {
 		name: 'Racing Paradoxes',
 		description: 'Counter-intuitive findings that challenge conventional F1 wisdom',
-		icon: '🤔',
 	},
 	evolution: {
 		name: 'Era Evolution',
 		description: 'How driver traits and racing have changed across F1 history',
-		icon: '📈',
 	},
 	relationship: {
 		name: 'Hidden Relationships',
 		description: 'Unexpected connections between drivers, circuits, and performance',
-		icon: '🔗',
 	},
 	performance: {
 		name: 'Performance Analysis',
 		description: 'Deep dives into what separates great drivers from good ones',
-		icon: '🏆',
 	},
 };
 

@@ -21,7 +21,7 @@ interface BarChartProps {
 
 const chartConfig = {
 	value: {
-		label: 'Value',
+		label: '',
 		color: 'var(--chart-1)',
 	},
 };
@@ -61,7 +61,7 @@ export function BarChart({
 								style: { 
 									textAnchor: 'middle', 
 									fontSize: '13px', 
-									fill: 'hsl(var(--foreground))',
+									fill: 'var(--foreground)',
 									fontWeight: 500
 								} 
 							}}
@@ -79,7 +79,7 @@ export function BarChart({
 								style: { 
 									textAnchor: 'middle', 
 									fontSize: '13px', 
-									fill: 'hsl(var(--foreground))',
+									fill: 'var(--foreground)',
 									fontWeight: 500
 								} 
 							}}
@@ -87,7 +87,10 @@ export function BarChart({
 						<ChartTooltip 
 							content={
 								<ChartTooltipContent
-									formatter={(value, name) => [value, name]}
+									formatter={(value, name) => [
+										typeof value === 'number' ? value.toFixed(2) : value, 
+										name
+									]}
 								/>
 							}
 						/>

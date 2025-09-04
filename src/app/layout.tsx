@@ -25,7 +25,7 @@ export default function RootLayout({
 				<script defer data-website-id='68b79f911a49c66777e60bf9' data-domain='racingdecoded.com' src='https://datafa.st/js/script.js'></script>
 			</head>
 			<body className={inter.className}>
-				<ThemeProvider attribute='class' defaultTheme='system' enableSystem disableTransitionOnChange>
+				<ThemeProvider attribute='class' defaultTheme='dark' enableSystem disableTransitionOnChange>
 					<ReactQueryProvider>
 						<NuqsAdapter>
 							<div className='min-h-screen bg-background'>

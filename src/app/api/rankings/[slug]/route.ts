@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getRankingConfig, type RankingConfig } from '@/lib/rankings-config';
@@ -13,7 +12,7 @@ type DriverWithIncludes = Driver & {
 // Helper function to handle circuit-specific rankings
 async function handleCircuitRanking(rankingConfig: RankingConfig) {
 	const circuitRef = rankingConfig.filters?.circuitRef;
-	
+
 	// Query for circuit-specific wins
 	const circuitWins = await prisma.result.groupBy({
 		by: ['driverId'],
@@ -21,79 +20,78 @@ async function handleCircuitRanking(rankingConfig: RankingConfig) {
 			position: 1, // Only wins (1st place)
 			race: {
 				circuit: {
-					circuitRef: circuitRef as string
-				}
-			}
+					circuitRef: circuitRef as string,
+				},
+			},
 		},
 		_count: {
-			resultId: true
+			resultId: true,
 		},
 		orderBy: {
 			_count: {
-				resultId: 'desc'
-			}
+				resultId: 'desc',
+			},
 		},
-		take: 20
+		take: 20,
 	});
 
 	// Get driver details for the top drivers
-	const driverIds = circuitWins.map(w => w.driverId);
+	const driverIds = circuitWins.map((w) => w.driverId);
 	const drivers = await prisma.driver.findMany({
 		where: {
 			driverId: {
-				in: driverIds
-			}
+				in: driverIds,
+			},
 		},
 		include: {
 			dnaProfile: true,
 			racingStats: true,
-		}
+		},
 	});
 
 	// Create a map for quick lookup
-	const driversMap = new Map(drivers.map(d => [d.driverId, d]));
-	const winsMap = new Map(circuitWins.map(w => [w.driverId, w._count?.resultId || 0]));
+	const driversMap = new Map(drivers.map((d) => [d.driverId, d]));
+	const winsMap = new Map(circuitWins.map((w) => [w.driverId, w._count?.resultId || 0]));
 
 	// Build the ranking response
-	const rankedDrivers = circuitWins.map((win, index) => {
-		const driver = driversMap.get(win.driverId);
-		if (!driver) return null;
+	const rankedDrivers = circuitWins
+		.map((win, index) => {
+			const driver = driversMap.get(win.driverId);
+			if (!driver) return null;
 
-		const age = driver.dob ? Math.floor((Date.now() - driver.dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null;
-		const wins = winsMap.get(driver.driverId) || 0;
+			const age = driver.dob ? Math.floor((Date.now() - driver.dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null;
+			const wins = winsMap.get(driver.driverId) || 0;
 
-		return {
-			id: driver.driverId,
-			name: `${driver.forename} ${driver.surname}`,
-			nationality: driver.nationality,
-			age,
-			dob: driver.dob,
-			position: index + 1,
-			rankingValue: wins,
-			dnaProfile: {
-				...driver.dnaProfile,
-				wins: driver.racingStats?.wins || 0,
-				secondPlaces: driver.racingStats?.secondPlaces || 0,
-				thirdPlaces: driver.racingStats?.thirdPlaces || 0,
-				podiums: driver.racingStats?.podiums || 0,
-				avgFinishPosition: driver.racingStats?.avgFinishPosition,
-				bestChampionshipFinish: driver.racingStats?.bestChampionshipFinish,
-				avgChampionshipFinish: driver.racingStats?.avgChampionshipFinish,
-			},
-		};
-	}).filter(Boolean);
+			return {
+				id: driver.driverId,
+				name: `${driver.forename} ${driver.surname}`,
+				nationality: driver.nationality,
+				age,
+				dob: driver.dob,
+				position: index + 1,
+				rankingValue: wins,
+				dnaProfile: {
+					...driver.dnaProfile,
+					wins: driver.racingStats?.wins || 0,
+					secondPlaces: driver.racingStats?.secondPlaces || 0,
+					thirdPlaces: driver.racingStats?.thirdPlaces || 0,
+					podiums: driver.racingStats?.podiums || 0,
+					avgFinishPosition: driver.racingStats?.avgFinishPosition,
+					bestChampionshipFinish: driver.racingStats?.bestChampionshipFinish,
+					avgChampionshipFinish: driver.racingStats?.avgChampionshipFinish,
+				},
+			};
+		})
+		.filter(Boolean);
 
 	return NextResponse.json({
 		ranking: rankingConfig,
 		drivers: rankedDrivers,
-		count: rankedDrivers.length
+		count: rankedDrivers.length,
 	});
 }
 
-export async function GET(
-	request: Request,
-	{ params }: { params: Promise<{ slug: string }> }
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
 	try {
 		const { slug } = await params;
 		const rankingConfig = getRankingConfig(slug);
@@ -107,34 +105,10 @@ export async function GET(
 			return await handleCircuitRanking(rankingConfig);
 		}
 
-		// Build order by clause based on ranking config
-		let orderBy: any = {};
-		
-		// DNA score fields
-		if (['aggressionScore', 'consistencyScore', 'racecraftScore', 'pressurePerformanceScore', 'raceStartScore', 'clutchFactorScore', 'racesAnalyzed'].includes(rankingConfig.sortField)) {
-			orderBy = {
-				dnaProfile: {
-					[rankingConfig.sortField]: rankingConfig.sortOrder,
-				},
-			};
-		}
-		// Racing stats fields  
-		else if (['wins', 'podiums', 'totalRaces', 'avgFinishPosition', 'bestChampionshipFinish'].includes(rankingConfig.sortField)) {
-			orderBy = {
-				racingStats: {
-					[rankingConfig.sortField]: rankingConfig.sortOrder,
-				},
-			};
-		}
-		// Driver fields
-		else if (rankingConfig.sortField === 'name') {
-			orderBy = [{ forename: rankingConfig.sortOrder }, { surname: rankingConfig.sortOrder }];
-		} else if (rankingConfig.sortField === 'nationality') {
-			orderBy = { nationality: rankingConfig.sortOrder };
-		}
+		// We'll sort in JavaScript after filtering to handle nullable fields properly
 
-		// Query drivers with appropriate includes
-		const drivers = await prisma.driver.findMany({
+		// Query drivers with appropriate includes - get all drivers and sort in JS to handle nullable fields
+		const drivers = (await prisma.driver.findMany({
 			include: {
 				dnaProfile: true,
 				racingStats: true,
@@ -142,16 +116,15 @@ export async function GET(
 			where: {
 				// Only include drivers with DNA profiles for DNA rankings
 				...(rankingConfig.category === 'dna' && {
-					dnaProfile: { isNot: null }
+					dnaProfile: { isNot: null },
 				}),
 				// Only include drivers with racing stats for career rankings
 				...(rankingConfig.category === 'career' && {
-					racingStats: { isNot: null }
+					racingStats: { isNot: null },
 				}),
 			},
-			orderBy,
-			take: 20, // Top 20 drivers
-		}) as DriverWithIncludes[];
+			// Remove orderBy from Prisma query - we'll sort in JS after filtering
+		})) as DriverWithIncludes[];
 
 		// Filter out drivers without required data and format
 		const driversWithData = drivers
@@ -219,15 +192,16 @@ export async function GET(
 			return 0;
 		});
 
-		// Update positions after sorting
-		driversWithData.forEach((driver, index) => {
+		// Take only top 20 and update positions after sorting
+		const top20Drivers = driversWithData.slice(0, 20);
+		top20Drivers.forEach((driver, index) => {
 			driver.position = index + 1;
 		});
 
 		return NextResponse.json({
 			ranking: rankingConfig,
-			drivers: driversWithData,
-			count: driversWithData.length
+			drivers: top20Drivers,
+			count: top20Drivers.length,
 		});
 	} catch (error) {
 		console.error('Error fetching ranking data:', error);

@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import type { RankingConfig } from '@/lib/rankings-config';
 
@@ -24,29 +23,25 @@ interface RankingsData {
 function RankingCard({ ranking }: { ranking: RankingConfig }) {
 	return (
 		<Link href={`/rankings/${ranking.slug}`}>
-			<Card className='cursor-pointer group'>
-				<CardHeader>
+			<Card className='cursor-pointer group hover:shadow-lg transition-all border-l-4 border-l-transparent hover:border-l-primary h-full'>
+				<CardHeader className='pb-3'>
 					<div className='flex items-start justify-between'>
-						<div className='flex items-start gap-3'>
-							<span className='text-2xl' role='img' aria-label={ranking.title}>
-								{ranking.icon}
-							</span>
-							<div>
-								<CardTitle className='text-lg'>{ranking.title}</CardTitle>
-								<CardDescription className='mt-2 text-sm'>{ranking.description}</CardDescription>
-							</div>
+						<div className='flex-1 min-w-0'>
+							<CardTitle className='text-lg group-hover:text-primary transition-colors leading-tight'>{ranking.title}</CardTitle>
+							<CardDescription
+								className='mt-2 text-sm overflow-hidden'
+								style={{
+									display: '-webkit-box',
+									WebkitLineClamp: 2,
+									WebkitBoxOrient: 'vertical',
+									lineHeight: '1.3em',
+									maxHeight: '2.6em',
+								}}>
+								{ranking.description}
+							</CardDescription>
 						</div>
-						<ArrowRight className='h-4 w-4 text-muted-foreground' />
 					</div>
 				</CardHeader>
-				<CardContent>
-					<div className='flex items-center gap-2'>
-						<Badge variant='secondary'>
-							{ranking.category}
-						</Badge>
-						<span className='text-xs text-muted-foreground'>Top 20 drivers</span>
-					</div>
-				</CardContent>
 			</Card>
 		</Link>
 	);
@@ -56,15 +51,12 @@ function CategorySection({ categoryData }: { categoryData: RankingCategory }) {
 	return (
 		<div className='space-y-4'>
 			<div className='flex items-center gap-3'>
-				<span className='text-3xl' role='img' aria-label={categoryData.name}>
-					{categoryData.icon}
-				</span>
 				<div>
 					<h2 className='text-2xl font-bold'>{categoryData.name}</h2>
 					<p className='text-muted-foreground'>{categoryData.description}</p>
 				</div>
 			</div>
-			<div className='grid gap-4 md:grid-cols-2'>
+			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6'>
 				{categoryData.rankings.map((ranking) => (
 					<RankingCard key={ranking.slug} ranking={ranking} />
 				))}

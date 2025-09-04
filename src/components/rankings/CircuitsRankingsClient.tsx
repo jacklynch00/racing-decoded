@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { getRankingsByCategory } from '@/lib/rankings-config';
 import type { RankingConfig } from '@/lib/rankings-config';
@@ -29,44 +29,31 @@ interface CircuitsData {
 function CircuitRankingCard({ ranking, circuitInfo }: { ranking: RankingConfig; circuitInfo?: CircuitInfo }) {
 	return (
 		<Link href={`/rankings/${ranking.slug}`}>
-			<Card className='cursor-pointer group'>
+			<Card className='cursor-pointer group hover:shadow-lg transition-all border-l-4 border-l-transparent hover:border-l-primary h-full'>
 				<CardHeader>
 					<div className='flex items-start justify-between'>
-						<div className='flex items-start gap-3'>
-							<span className='text-2xl' role='img' aria-label={ranking.title}>
-								{ranking.icon}
-							</span>
-							<div>
-								<CardTitle className='text-lg'>{ranking.title}</CardTitle>
-								<CardDescription className='mt-2 text-sm'>{ranking.description}</CardDescription>
-								{circuitInfo && (
-									<div className='mt-3 space-y-1'>
-										<p className='text-xs text-muted-foreground'>
-											📍 {circuitInfo.location}, {circuitInfo.country}
-										</p>
-										<p className='text-xs text-muted-foreground'>
-											🏁 {circuitInfo.totalRaces} total races ({circuitInfo.firstRace}-{circuitInfo.lastRace})
-										</p>
-									</div>
-								)}
-							</div>
+						<div className='flex-1 min-w-0'>
+							<CardTitle className='text-lg group-hover:text-primary transition-colors leading-tight'>{ranking.title}</CardTitle>
+							<CardDescription className='mt-2 text-sm'>{ranking.description}</CardDescription>
+							{circuitInfo && (
+								<div className='mt-3 space-y-1'>
+									<p className='text-xs text-muted-foreground'>
+										{circuitInfo.location}, {circuitInfo.country}
+									</p>
+									<p className='text-xs text-muted-foreground'>
+										{circuitInfo.totalRaces} total races ({circuitInfo.firstRace}-{circuitInfo.lastRace})
+									</p>
+								</div>
+							)}
 						</div>
-						<ArrowRight className='h-4 w-4 text-muted-foreground' />
 					</div>
 				</CardHeader>
 				<CardContent>
 					<div className='flex items-center justify-between'>
 						<div className='flex items-center gap-2'>
-							<Badge variant='secondary'>
-								Circuit Masters
-							</Badge>
-							<span className='text-xs text-muted-foreground'>Top 20 drivers</span>
+							<Badge variant='secondary'>Circuit Masters</Badge>
 						</div>
-						{circuitInfo && circuitInfo.recentRaces > 0 && (
-							<Badge variant='outline'>
-								{circuitInfo.recentRaces} recent races
-							</Badge>
-						)}
+						{circuitInfo && circuitInfo.recentRaces > 0 && <Badge variant='outline'>{circuitInfo.recentRaces} recent races</Badge>}
 					</div>
 				</CardContent>
 			</Card>
@@ -202,7 +189,7 @@ export function CircuitsRankingsClient() {
 			<div className='space-y-8'>
 				<div>
 					<h2 className='text-2xl font-bold mb-6'>Legendary Circuits</h2>
-					<div className='grid gap-6 md:grid-cols-2'>
+					<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6'>
 						{rankingsWithCircuitInfo.map(({ ranking, circuitInfo }) => (
 							<CircuitRankingCard key={ranking.slug} ranking={ranking} circuitInfo={circuitInfo} />
 						))}
@@ -216,7 +203,7 @@ export function CircuitsRankingsClient() {
 					<CardTitle className='text-lg'>About Circuit Masters</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<div className='grid gap-4 md:grid-cols-2'>
+					<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6'>
 						<div>
 							<h4 className='font-semibold mb-2'>What are Circuit Masters?</h4>
 							<p className='text-sm text-muted-foreground'>

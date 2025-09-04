@@ -7,7 +7,6 @@ export interface RankingConfig {
 	sortField: string;
 	sortOrder: 'asc' | 'desc';
 	category: 'dna' | 'career' | 'circuit' | 'era';
-	icon: string;
 	unit?: string;
 	filters?: Record<string, unknown>;
 	customQuery?: boolean; // For complex rankings that need custom API logic
@@ -25,7 +24,6 @@ export const rankingsConfig: Record<string, RankingConfig> = {
 		sortField: 'aggressionScore',
 		sortOrder: 'desc',
 		category: 'dna',
-		icon: '⚡',
 		unit: '/100',
 	},
 	'most-consistent': {
@@ -37,7 +35,6 @@ export const rankingsConfig: Record<string, RankingConfig> = {
 		sortField: 'consistencyScore',
 		sortOrder: 'desc',
 		category: 'dna',
-		icon: '🎯',
 		unit: '/100',
 	},
 	'best-racecraft': {
@@ -49,7 +46,6 @@ export const rankingsConfig: Record<string, RankingConfig> = {
 		sortField: 'racecraftScore',
 		sortOrder: 'desc',
 		category: 'dna',
-		icon: '🧠',
 		unit: '/100',
 	},
 	'best-under-pressure': {
@@ -61,7 +57,6 @@ export const rankingsConfig: Record<string, RankingConfig> = {
 		sortField: 'pressurePerformanceScore',
 		sortOrder: 'desc',
 		category: 'dna',
-		icon: '💎',
 		unit: '/100',
 	},
 	'best-race-start': {
@@ -73,19 +68,6 @@ export const rankingsConfig: Record<string, RankingConfig> = {
 		sortField: 'raceStartScore',
 		sortOrder: 'desc',
 		category: 'dna',
-		icon: '🚀',
-		unit: '/100',
-	},
-	'most-clutch': {
-		slug: 'most-clutch',
-		title: 'Most Clutch F1 Drivers',
-		description: 'Drivers who deliver their best performances when it matters most, in decisive moments and close championships.',
-		metaTitle: 'Most Clutch F1 Drivers - Performance When It Matters',
-		metaDescription: 'Which F1 drivers are most clutch in crucial moments? See our ranking based on performance in decisive races and championship battles.',
-		sortField: 'clutchFactorScore',
-		sortOrder: 'desc',
-		category: 'dna',
-		icon: '🔥',
 		unit: '/100',
 	},
 
@@ -99,7 +81,6 @@ export const rankingsConfig: Record<string, RankingConfig> = {
 		sortField: 'wins',
 		sortOrder: 'desc',
 		category: 'career',
-		icon: '🏆',
 		unit: ' wins',
 	},
 	'most-podiums': {
@@ -111,7 +92,6 @@ export const rankingsConfig: Record<string, RankingConfig> = {
 		sortField: 'podiums',
 		sortOrder: 'desc',
 		category: 'career',
-		icon: '🥇',
 		unit: ' podiums',
 	},
 	'best-average-finish': {
@@ -123,7 +103,6 @@ export const rankingsConfig: Record<string, RankingConfig> = {
 		sortField: 'avgFinishPosition',
 		sortOrder: 'asc',
 		category: 'career',
-		icon: '📊',
 		unit: ' avg',
 	},
 	'most-races': {
@@ -135,7 +114,6 @@ export const rankingsConfig: Record<string, RankingConfig> = {
 		sortField: 'totalRaces',
 		sortOrder: 'desc',
 		category: 'career',
-		icon: '🏁',
 		unit: ' races',
 	},
 	'best-championship-finish': {
@@ -147,11 +125,9 @@ export const rankingsConfig: Record<string, RankingConfig> = {
 		sortField: 'bestChampionshipFinish',
 		sortOrder: 'asc',
 		category: 'career',
-		icon: '👑',
 		unit: ' position',
 	},
 
-	// Circuit Master Rankings - Most Wins at Iconic Circuits
 	'most-wins-monaco': {
 		slug: 'most-wins-monaco',
 		title: 'Most Wins at Monaco Grand Prix',
@@ -161,7 +137,6 @@ export const rankingsConfig: Record<string, RankingConfig> = {
 		sortField: 'wins',
 		sortOrder: 'desc',
 		category: 'circuit',
-		icon: '🏰',
 		unit: ' wins',
 		filters: { circuitRef: 'monaco' },
 		customQuery: true,
@@ -175,7 +150,6 @@ export const rankingsConfig: Record<string, RankingConfig> = {
 		sortField: 'wins',
 		sortOrder: 'desc',
 		category: 'circuit',
-		icon: '🇬🇧',
 		unit: ' wins',
 		filters: { circuitRef: 'silverstone' },
 		customQuery: true,
@@ -189,7 +163,6 @@ export const rankingsConfig: Record<string, RankingConfig> = {
 		sortField: 'wins',
 		sortOrder: 'desc',
 		category: 'circuit',
-		icon: '🇮🇹',
 		unit: ' wins',
 		filters: { circuitRef: 'monza' },
 		customQuery: true,
@@ -203,7 +176,6 @@ export const rankingsConfig: Record<string, RankingConfig> = {
 		sortField: 'wins',
 		sortOrder: 'desc',
 		category: 'circuit',
-		icon: '🇧🇪',
 		unit: ' wins',
 		filters: { circuitRef: 'spa' },
 		customQuery: true,
@@ -217,7 +189,6 @@ export const rankingsConfig: Record<string, RankingConfig> = {
 		sortField: 'wins',
 		sortOrder: 'desc',
 		category: 'circuit',
-		icon: '🇧🇷',
 		unit: ' wins',
 		filters: { circuitRef: 'interlagos' },
 		customQuery: true,
@@ -231,7 +202,6 @@ export const rankingsConfig: Record<string, RankingConfig> = {
 		sortField: 'wins',
 		sortOrder: 'desc',
 		category: 'circuit',
-		icon: '🇯🇵',
 		unit: ' wins',
 		filters: { circuitRef: 'suzuka' },
 		customQuery: true,
@@ -242,17 +212,14 @@ export const rankingCategories = {
 	dna: {
 		name: 'Driver DNA',
 		description: 'Rankings based on driving personality traits and behavioral analysis',
-		icon: '🧬',
 	},
 	career: {
 		name: 'Career Achievements',
 		description: 'Rankings based on career statistics and accomplishments',
-		icon: '🏆',
 	},
 	circuit: {
 		name: 'Circuit Masters',
 		description: 'Rankings for performance at specific race tracks',
-		icon: '🏎️',
 	},
 };
 
