@@ -53,11 +53,7 @@ export function TrackVisualization({ raceId, driverId }: TrackVisualizationProps
 				const data: AnimationData = await response.json();
 				setAnimationData(data);
 
-				// Reset and load data into Canvas animator if initialized
-				if (animatorRef.current) {
-					animatorRef.current.reset();
-					animatorRef.current.loadAnimationData(data);
-				}
+				// Don't reset here - let the separate effect handle loading data into canvas
 
 				// Initialize lap counter
 				setTotalLaps(data.animationData.totalLaps);
@@ -77,54 +73,51 @@ export function TrackVisualization({ raceId, driverId }: TrackVisualizationProps
 
 	// Initialize Canvas when component mounts
 	useEffect(() => {
-		console.log('TrackVisualization: Canvas effect triggered', {
+		console.log('TrackVisualization: Canvas initialization effect triggered', {
 			hasCanvas: !!canvasRef.current,
 			trackInitialized,
-			hasAnimationData: !!animationData,
 		});
 
-		if (canvasRef.current && !trackInitialized) {
+		const initializeCanvas = () => {
+			if (!canvasRef.current) {
+				console.log('TrackVisualization: Canvas ref not available, trying again in 100ms');
+				setTimeout(initializeCanvas, 100);
+				return;
+			}
+
+			if (trackInitialized) {
+				console.log('TrackVisualization: Already initialized');
+				return;
+			}
+
 			try {
 				console.log('TrackVisualization: Initializing Canvas animator...');
 				animatorRef.current = initializeCanvasAnimator(canvasRef.current, MONACO_TRACK);
 				setTrackInitialized(true);
-
-				// Load data if already available
-				if (animationData) {
-					animatorRef.current.loadAnimationData(animationData);
-				}
-
 				console.log('TrackVisualization: Canvas animator initialized successfully');
 			} catch (err) {
 				console.error('TrackVisualization: Failed to initialize Canvas animator:', err);
 				setError(`Failed to initialize track animation: ${err instanceof Error ? err.message : 'Unknown error'}`);
 			}
+		};
+
+		// Start initialization process
+		initializeCanvas();
+		
+	}, []); // Only run once on mount
+
+	// Load animation data into initialized canvas
+	useEffect(() => {
+		if (animatorRef.current && trackInitialized && animationData) {
+			console.log('TrackVisualization: Loading animation data into initialized canvas');
+			try {
+				// Load new data without clearing the track
+				animatorRef.current.loadAnimationDataWithoutReset(animationData);
+			} catch (err) {
+				console.error('TrackVisualization: Failed to load animation data:', err);
+			}
 		}
 	}, [animationData, trackInitialized]);
-
-	// Additional effect to try initializing when canvas ref becomes available
-	useEffect(() => {
-		if (canvasRef.current && !trackInitialized && !animatorRef.current) {
-			const timer = setTimeout(() => {
-				try {
-					console.log('TrackVisualization: Delayed Canvas initialization...');
-					animatorRef.current = initializeCanvasAnimator(canvasRef.current!, MONACO_TRACK);
-					setTrackInitialized(true);
-
-					if (animationData) {
-						animatorRef.current.loadAnimationData(animationData);
-					}
-
-					console.log('TrackVisualization: Delayed Canvas initialization successful');
-				} catch (err) {
-					console.error('TrackVisualization: Delayed Canvas initialization failed:', err);
-					setError(`Failed to initialize track animation: ${err instanceof Error ? err.message : 'Unknown error'}`);
-				}
-			}, 100);
-
-			return () => clearTimeout(timer);
-		}
-	}, [trackInitialized, animationData]);
 
 	// Cleanup on unmount
 	useEffect(() => {
@@ -198,17 +191,7 @@ export function TrackVisualization({ raceId, driverId }: TrackVisualizationProps
 		animatorRef.current.setSpeed(speed);
 	};
 
-	if (loading) {
-		return (
-			<Card>
-				<CardContent className='py-12'>
-					<div className='text-center'>
-						<p className='text-muted-foreground'>Loading race data...</p>
-					</div>
-				</CardContent>
-			</Card>
-		);
-	}
+	// Don't return early for loading - show loading overlay instead to keep track visible
 
 	if (error) {
 		return (
@@ -222,45 +205,37 @@ export function TrackVisualization({ raceId, driverId }: TrackVisualizationProps
 		);
 	}
 
-	if (!animationData) {
-		return (
-			<Card>
-				<CardContent className='py-12'>
-					<div className='text-center'>
-						<p className='text-muted-foreground'>No race data available</p>
-					</div>
-				</CardContent>
-			</Card>
-		);
-	}
+	// Show track even without data - it will show a loading or no data overlay
 
 	return (
 		<div className='space-y-4 sm:space-y-6'>
 			{/* Race Information */}
-			<Card>
-				<CardHeader>
-					<div className='flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4'>
-						<div className='flex-1'>
-							<CardTitle className='text-lg sm:text-xl'>
-								{animationData.raceInfo.raceName} {animationData.raceInfo.year}
-							</CardTitle>
-							<CardDescription className='text-sm sm:text-base'>
-								{animationData.driverInfo.name} • {animationData.raceInfo.circuitName}
-							</CardDescription>
-						</div>
-						<div className='flex gap-2'>
-							<Badge variant='outline' className='text-xs'>
-								Grid: P{animationData.raceResult.gridPosition}
-							</Badge>
-							{animationData.raceResult.finishPosition && (
+			{animationData && (
+				<Card>
+					<CardHeader>
+						<div className='flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4'>
+							<div className='flex-1'>
+								<CardTitle className='text-lg sm:text-xl'>
+									{animationData.raceInfo.raceName} {animationData.raceInfo.year}
+								</CardTitle>
+								<CardDescription className='text-sm sm:text-base'>
+									{animationData.driverInfo.name} • {animationData.raceInfo.circuitName}
+								</CardDescription>
+							</div>
+							<div className='flex gap-2'>
 								<Badge variant='outline' className='text-xs'>
-									Finish: P{animationData.raceResult.finishPosition}
+									Grid: P{animationData.raceResult.gridPosition}
 								</Badge>
-							)}
+								{animationData.raceResult.finishPosition && (
+									<Badge variant='outline' className='text-xs'>
+										Finish: P{animationData.raceResult.finishPosition}
+									</Badge>
+								)}
+							</div>
 						</div>
-					</div>
-				</CardHeader>
-			</Card>
+					</CardHeader>
+				</Card>
+			)}
 
 			{/* Track Visualization */}
 			<Card>
@@ -284,19 +259,33 @@ export function TrackVisualization({ raceId, driverId }: TrackVisualizationProps
 					<div className='flex flex-col lg:flex-row gap-4 lg:gap-6'>
 						{/* Track Container */}
 						<div className='flex-1 flex justify-center'>
-							<div className='rounded-lg flex items-center justify-center relative w-full max-w-[600px]' style={{ aspectRatio: '6/5' }}>
+							<div className='rounded-lg flex items-center justify-center relative w-full max-w-[400px] sm:max-w-[500px] lg:max-w-[600px]' style={{ aspectRatio: '6/5' }}>
 								<canvas
 									ref={canvasRef}
 									width={600}
 									height={500}
 									className='w-full h-full'
 									style={{
-										maxWidth: '600px',
-										maxHeight: '500px',
-										display: trackInitialized ? 'block' : 'none',
+										maxWidth: '100%',
+										maxHeight: '100%',
+										display: 'block',
 									}}
 								/>
-								{!trackInitialized && <p className='text-muted-foreground absolute inset-0 flex items-center justify-center'>Initializing track...</p>}
+								{!trackInitialized && (
+									<div className='absolute inset-0 bg-background/80 flex items-center justify-center rounded-lg'>
+										<p className='text-muted-foreground'>Initializing track...</p>
+									</div>
+								)}
+								{loading && trackInitialized && (
+									<div className='absolute inset-0 bg-background/80 flex items-center justify-center rounded-lg'>
+										<p className='text-muted-foreground'>Loading driver data...</p>
+									</div>
+								)}
+								{!loading && trackInitialized && !animationData && (
+									<div className='absolute inset-0 bg-background/80 flex items-center justify-center rounded-lg'>
+										<p className='text-muted-foreground'>Select driver to load data...</p>
+									</div>
+								)}
 							</div>
 
 							{/* Animation Status Overlay */}
@@ -335,7 +324,8 @@ export function TrackVisualization({ raceId, driverId }: TrackVisualizationProps
 			</Card>
 
 			{/* Race Statistics */}
-			<div className='grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4'>
+			{animationData && (
+				<div className='grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4'>
 				<Card>
 					<CardContent className='py-3 sm:py-4'>
 						<div className='text-xl sm:text-2xl font-bold'>{animationData.raceResult.totalLaps}</div>
@@ -366,6 +356,7 @@ export function TrackVisualization({ raceId, driverId }: TrackVisualizationProps
 					</CardContent>
 				</Card>
 			</div>
+			)}
 		</div>
 	);
 }

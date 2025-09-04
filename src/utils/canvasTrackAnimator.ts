@@ -27,7 +27,7 @@ export class CanvasF1Animator {
 
 	// Car properties
 	private carPosition: CanvasCarPosition = { x: 0, y: 0 };
-	private carSize: number = 8;
+	private carSize: number = 12;
 
 	// Canvas scaling
 	private scale: number = 1;
@@ -56,27 +56,29 @@ export class CanvasF1Animator {
 
 	private setupCanvas(): void {
 		// Handle high DPI displays
-		const rect = this.canvas.getBoundingClientRect();
 		const dpr = window.devicePixelRatio || 1;
 
-		// If canvas already has explicit dimensions, use those
-		if (this.canvas.width && this.canvas.height) {
-			this.ctx.scale(dpr, dpr);
-		} else {
-			this.canvas.width = rect.width * dpr;
-			this.canvas.height = rect.height * dpr;
-			this.ctx.scale(dpr, dpr);
+		// Store the original intended dimensions
+		const originalWidth = this.canvas.width;
+		const originalHeight = this.canvas.height;
 
-			// Set canvas display size
-			this.canvas.style.width = rect.width + 'px';
-			this.canvas.style.height = rect.height + 'px';
-		}
+		// Scale canvas buffer for high DPI
+		this.canvas.width = originalWidth * dpr;
+		this.canvas.height = originalHeight * dpr;
+		
+		// Scale the context back down so that drawing commands work at original scale
+		this.ctx.scale(dpr, dpr);
+		
+		// Set display size to original dimensions
+		this.canvas.style.width = originalWidth + 'px';
+		this.canvas.style.height = originalHeight + 'px';
 	}
 
 	private calculateTrackScale(): void {
 		const padding = 40;
-		const canvasWidth = this.canvas.width / (window.devicePixelRatio || 1);
-		const canvasHeight = this.canvas.height / (window.devicePixelRatio || 1);
+		// Use original dimensions (before DPI scaling)
+		const canvasWidth = parseInt(this.canvas.style.width) || this.canvas.width / (window.devicePixelRatio || 1);
+		const canvasHeight = parseInt(this.canvas.style.height) || this.canvas.height / (window.devicePixelRatio || 1);
 
 		// Find track bounds
 		const xs = this.track.coordinates.map((coord) => coord[0]);
@@ -108,6 +110,22 @@ export class CanvasF1Animator {
 	loadAnimationData(data: AnimationData): void {
 		this.data = data;
 		this.reset();
+	}
+
+	loadAnimationDataWithoutReset(data: AnimationData): void {
+		this.data = data;
+		// Reset animation state but keep track visible
+		this.pause();
+		this.currentLap = 0;
+		
+		// Reset car to starting position
+		if (this.track.coordinates.length > 0) {
+			const startPos = this.screenCoordinate(this.track.coordinates[0][0], this.track.coordinates[0][1]);
+			this.carPosition = startPos;
+			
+			// Just redraw without clearing (track stays visible)
+			this.draw();
+		}
 	}
 
 	setCallbacks(callbacks: {
@@ -279,7 +297,7 @@ export class CanvasF1Animator {
 
 	private drawTrack(): void {
 		this.ctx.strokeStyle = '#ffffff';
-		this.ctx.lineWidth = 4;
+		this.ctx.lineWidth = 8;
 		this.ctx.lineCap = 'round';
 		this.ctx.lineJoin = 'round';
 
@@ -299,7 +317,7 @@ export class CanvasF1Animator {
 
 		// Add track outline for better visibility
 		this.ctx.strokeStyle = '#000000';
-		this.ctx.lineWidth = 6;
+		this.ctx.lineWidth = 10;
 		this.ctx.globalCompositeOperation = 'destination-over';
 		this.ctx.stroke();
 		this.ctx.globalCompositeOperation = 'source-over';
