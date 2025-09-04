@@ -3,6 +3,11 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CheckIcon, ChevronsUpDownIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { TrackVisualization } from '@/components/TrackVisualization';
 
 // Available tracks (starting with Monaco)
@@ -51,6 +56,11 @@ export default function TrackAnimationPage() {
 	const [availableDrivers, setAvailableDrivers] = useState<Driver[]>([]);
 	const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 	const [loading, setLoading] = useState(false);
+
+	// Combobox states
+	const [trackOpen, setTrackOpen] = useState(false);
+	const [raceOpen, setRaceOpen] = useState(false);
+	const [driverOpen, setDriverOpen] = useState(false);
 
 	// Load races when track is selected
 	useEffect(() => {
@@ -111,119 +121,162 @@ export default function TrackAnimationPage() {
 				</div>
 			</div>
 
-			{/* Selection Flow */}
-			<div className='grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3'>
-				{/* Step 1: Track Selection */}
-				<Card className={selectedTrack ? 'border-primary' : ''}>
-					<CardHeader>
-						<CardTitle className='flex items-center gap-2'>
-							<span className='flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold'>1</span>
-							Select Track
-						</CardTitle>
-						<CardDescription>Choose a circuit to visualize</CardDescription>
-					</CardHeader>
-					<CardContent className='space-y-3'>
-						{AVAILABLE_TRACKS.map((track) => (
-							<div
-								key={track.id}
-								className={`p-3 border rounded cursor-pointer transition-all ${
-									selectedTrack === track.id ? 'border-primary bg-primary/5' : track.available ? 'hover:border-primary/50' : 'opacity-50 cursor-not-allowed'
-								}`}
-								onClick={() => track.available && setSelectedTrack(track.id)}>
-								<div className='flex justify-between items-start mb-1'>
-									<h3 className='font-medium'>{track.name}</h3>
-									{!track.available && (
-										<Badge variant='secondary' className='text-xs'>
-											Coming Soon
-										</Badge>
-									)}
-								</div>
-								<p className='text-sm text-muted-foreground'>{track.country}</p>
-								<p className='text-xs text-muted-foreground'>{track.lapDistance}km lap</p>
-							</div>
-						))}
-					</CardContent>
-				</Card>
+			{/* Compact Selection Controls */}
+			<Card>
+				<CardHeader>
+					<CardTitle>Race Selection</CardTitle>
+					<CardDescription>Choose a track, race, and driver to start the animation</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<div className='flex flex-col sm:flex-row gap-4'>
+						{/* Track Selection */}
+						<div className='flex-1'>
+							<label className='text-sm font-medium mb-2 block'>Track</label>
+							<Popover open={trackOpen} onOpenChange={setTrackOpen}>
+								<PopoverTrigger asChild>
+									<Button variant='outline' role='combobox' aria-expanded={trackOpen} className='w-full justify-between'>
+										{selectedTrack
+											? AVAILABLE_TRACKS.find((track) => track.id === selectedTrack)?.name || 'Select track...'
+											: 'Select track...'}
+										<ChevronsUpDownIcon className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+									</Button>
+								</PopoverTrigger>
+								<PopoverContent className='w-full p-0'>
+									<Command>
+										<CommandInput placeholder='Search tracks...' />
+										<CommandList>
+											<CommandEmpty>No tracks found.</CommandEmpty>
+											<CommandGroup>
+												{AVAILABLE_TRACKS.map((track) => (
+													<CommandItem
+														key={track.id}
+														value={track.id}
+														disabled={!track.available}
+														onSelect={(currentValue) => {
+															if (!track.available) return;
+															setSelectedTrack(currentValue === selectedTrack ? null : currentValue);
+															setSelectedRace(null);
+															setSelectedDriver(null);
+															setTrackOpen(false);
+														}}>
+														<CheckIcon
+															className={cn('mr-2 h-4 w-4', selectedTrack === track.id ? 'opacity-100' : 'opacity-0')}
+														/>
+														<div className='flex-1 text-left'>
+															<div className={cn('font-medium', !track.available && 'text-muted-foreground')}>
+																{track.name}
+															</div>
+															<div className='text-xs text-muted-foreground'>
+																{track.country} • {track.lapDistance}km
+															</div>
+														</div>
+														{!track.available && (
+															<Badge variant='secondary' className='ml-2 text-xs'>
+																Coming Soon
+															</Badge>
+														)}
+													</CommandItem>
+												))}
+											</CommandGroup>
+										</CommandList>
+									</Command>
+								</PopoverContent>
+							</Popover>
+						</div>
 
-				{/* Step 2: Race Selection */}
-				<Card className={selectedRace ? 'border-primary' : selectedTrack ? '' : 'opacity-50'}>
-					<CardHeader>
-						<CardTitle className='flex items-center gap-2'>
-							<span
-								className={`flex items-center justify-center w-6 h-6 rounded-full text-sm font-bold ${
-									selectedTrack ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-								}`}>
-								2
-							</span>
-							Select Race
-						</CardTitle>
-						<CardDescription>{selectedTrack ? 'Choose a specific race weekend' : 'Select a track first'}</CardDescription>
-					</CardHeader>
-					<CardContent>
-						{loading ? (
-							<p className='text-center text-muted-foreground py-4'>Loading races...</p>
-						) : availableRaces.length > 0 ? (
-							<div className='space-y-3 max-h-64 overflow-y-auto'>
-								{availableRaces.map((race) => (
-									<div
-										key={race.raceId}
-										className={`p-3 border rounded cursor-pointer transition-all ${
-											selectedRace?.raceId === race.raceId ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
-										}`}
-										onClick={() => setSelectedRace(race)}>
-										<h3 className='font-medium'>{race.name}</h3>
-										<p className='text-sm text-muted-foreground'>{race.year}</p>
-										<p className='text-xs text-muted-foreground'>{new Date(race.date).toLocaleDateString()}</p>
-									</div>
-								))}
-							</div>
-						) : selectedTrack ? (
-							<p className='text-center text-muted-foreground py-4'>No races available</p>
-						) : (
-							<p className='text-center text-muted-foreground py-4'>Select a track to see available races</p>
-						)}
-					</CardContent>
-				</Card>
+						{/* Race Selection */}
+						<div className='flex-1'>
+							<label className='text-sm font-medium mb-2 block'>Race</label>
+							<Popover open={raceOpen} onOpenChange={setRaceOpen}>
+								<PopoverTrigger asChild>
+									<Button
+										variant='outline'
+										role='combobox'
+										aria-expanded={raceOpen}
+										className='w-full justify-between'
+										disabled={!selectedTrack}>
+										{selectedRace ? `${selectedRace.name} ${selectedRace.year}` : 'Select race...'}
+										<ChevronsUpDownIcon className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+									</Button>
+								</PopoverTrigger>
+								<PopoverContent className='w-full p-0'>
+									<Command>
+										<CommandInput placeholder='Search races...' />
+										<CommandList>
+											<CommandEmpty>{loading ? 'Loading races...' : 'No races found.'}</CommandEmpty>
+											<CommandGroup>
+												{availableRaces.map((race) => (
+													<CommandItem
+														key={race.raceId}
+														value={race.raceId.toString()}
+														onSelect={() => {
+															setSelectedRace(race);
+															setSelectedDriver(null);
+															setRaceOpen(false);
+														}}>
+														<CheckIcon
+															className={cn('mr-2 h-4 w-4', selectedRace?.raceId === race.raceId ? 'opacity-100' : 'opacity-0')}
+														/>
+														<div className='flex-1 text-left'>
+															<div className='font-medium'>{race.name}</div>
+															<div className='text-xs text-muted-foreground'>{race.year} • {new Date(race.date).toLocaleDateString()}</div>
+														</div>
+													</CommandItem>
+												))}
+											</CommandGroup>
+										</CommandList>
+									</Command>
+								</PopoverContent>
+							</Popover>
+						</div>
 
-				{/* Step 3: Driver Selection */}
-				<Card className={selectedDriver ? 'border-primary' : selectedRace ? '' : 'opacity-50'}>
-					<CardHeader>
-						<CardTitle className='flex items-center gap-2'>
-							<span
-								className={`flex items-center justify-center w-6 h-6 rounded-full text-sm font-bold ${
-									selectedRace ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-								}`}>
-								3
-							</span>
-							Select Driver
-						</CardTitle>
-						<CardDescription>{selectedRace ? 'Choose a driver to animate' : 'Select a race first'}</CardDescription>
-					</CardHeader>
-					<CardContent>
-						{loading ? (
-							<p className='text-center text-muted-foreground py-4'>Loading drivers...</p>
-						) : availableDrivers.length > 0 ? (
-							<div className='space-y-3 max-h-64 overflow-y-auto'>
-								{availableDrivers.map((driver) => (
-									<div
-										key={driver.driverId}
-										className={`p-3 border rounded cursor-pointer transition-all ${
-											selectedDriver?.driverId === driver.driverId ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
-										}`}
-										onClick={() => setSelectedDriver(driver)}>
-										<h3 className='font-medium'>{driver.name}</h3>
-										<p className='text-sm text-muted-foreground'>{driver.nationality}</p>
-									</div>
-								))}
-							</div>
-						) : selectedRace ? (
-							<p className='text-center text-muted-foreground py-4'>No drivers available</p>
-						) : (
-							<p className='text-center text-muted-foreground py-4'>Select a race to see available drivers</p>
-						)}
-					</CardContent>
-				</Card>
-			</div>
+						{/* Driver Selection */}
+						<div className='flex-1'>
+							<label className='text-sm font-medium mb-2 block'>Driver</label>
+							<Popover open={driverOpen} onOpenChange={setDriverOpen}>
+								<PopoverTrigger asChild>
+									<Button
+										variant='outline'
+										role='combobox'
+										aria-expanded={driverOpen}
+										className='w-full justify-between'
+										disabled={!selectedRace}>
+										{selectedDriver ? selectedDriver.name : 'Select driver...'}
+										<ChevronsUpDownIcon className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+									</Button>
+								</PopoverTrigger>
+								<PopoverContent className='w-full p-0'>
+									<Command>
+										<CommandInput placeholder='Search drivers...' />
+										<CommandList>
+											<CommandEmpty>{loading ? 'Loading drivers...' : 'No drivers found.'}</CommandEmpty>
+											<CommandGroup>
+												{availableDrivers.map((driver) => (
+													<CommandItem
+														key={driver.driverId}
+														value={driver.driverId.toString()}
+														onSelect={() => {
+															setSelectedDriver(driver);
+															setDriverOpen(false);
+														}}>
+														<CheckIcon
+															className={cn('mr-2 h-4 w-4', selectedDriver?.driverId === driver.driverId ? 'opacity-100' : 'opacity-0')}
+														/>
+														<div className='flex-1 text-left'>
+															<div className='font-medium'>{driver.name}</div>
+															<div className='text-xs text-muted-foreground'>{driver.nationality}</div>
+														</div>
+													</CommandItem>
+												))}
+											</CommandGroup>
+										</CommandList>
+									</Command>
+								</PopoverContent>
+							</Popover>
+						</div>
+					</div>
+				</CardContent>
+			</Card>
 
 			{/* Track Animation */}
 			{canStartAnimation && <TrackVisualization raceId={selectedRace!.raceId} driverId={selectedDriver!.driverId} />}

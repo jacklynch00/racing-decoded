@@ -38,25 +38,35 @@ export function RaceControls({
 }: RaceControlsProps) {
 	const [speed, setSpeed] = useState(1);
 
+	const speedValues = [1, 3, 5, 7, 10];
+	
+	const getSpeedIndex = (speed: number): number => {
+		return speedValues.indexOf(speed);
+	};
+
 	const handleSpeedChange = (newSpeed: number[]) => {
-		const speedValue = newSpeed[0];
+		const speedIndex = newSpeed[0];
+		const speedValue = speedValues[speedIndex];
 		setSpeed(speedValue);
 		onSpeedChange(speedValue);
 	};
 
 	const getSpeedLabel = (speed: number): string => {
 		if (speed <= 1) return 'Normal';
-		if (speed <= 2) return 'Fast';
-		if (speed <= 4) return 'Very Fast';
-		return 'Ultra Fast';
+		if (speed <= 3) return 'Fast';
+		if (speed <= 5) return 'Very Fast';
+		if (speed <= 7) return 'Ultra Fast';
+		return 'Maximum';
 	};
 
 	const getOverallProgressPercentage = (): number => {
 		if (totalLaps === 0) return 0;
-		// Calculate overall progress including current lap progress
+		// currentLap is 1-based (1, 2, 3...) from the animator
+		// Calculate progress: completed laps + current lap progress
 		const completedLaps = Math.max(0, currentLap - 1);
 		const currentLapProgress = lapProgress || 0;
 		const progress = ((completedLaps + currentLapProgress) / totalLaps) * 100;
+		
 		// Ensure progress is between 0 and 100
 		return Math.min(100, Math.max(0, progress));
 	};
@@ -113,11 +123,11 @@ export function RaceControls({
 					<div className='flex justify-between items-center text-xs sm:text-sm'>
 						<span className='text-muted-foreground'>Race Progress</span>
 						<span className='font-mono'>
-							{currentLap} / {totalLaps} laps
+							{currentLap} / {totalLaps} laps (LP: {(lapProgress * 100).toFixed(1)}%)
 						</span>
 					</div>
 					<div className='w-full bg-muted rounded-full h-2'>
-						<div className='bg-primary h-2 rounded-full transition-all duration-300' style={{ width: `${getOverallProgressPercentage()}%` }} />
+						<div className='bg-primary h-2 rounded-full transition-all duration-75' style={{ width: `${getOverallProgressPercentage()}%` }} />
 					</div>
 					<div className='flex justify-between text-xs text-muted-foreground'>
 						<span>Start</span>
@@ -139,15 +149,14 @@ export function RaceControls({
 						</Badge>
 					</div>
 
-					<Slider value={[speed]} onValueChange={handleSpeedChange} min={1} max={6} step={1} className='w-full' />
+					<Slider value={[getSpeedIndex(speed)]} onValueChange={handleSpeedChange} min={0} max={4} step={1} className='w-full' />
 
 					<div className='flex justify-between text-xs text-muted-foreground'>
 						<span>1x</span>
-						<span className='hidden sm:inline'>2x</span>
 						<span className='hidden sm:inline'>3x</span>
-						<span className='hidden sm:inline'>4x</span>
 						<span className='hidden sm:inline'>5x</span>
-						<span>6x</span>
+						<span className='hidden sm:inline'>7x</span>
+						<span>10x</span>
 					</div>
 				</div>
 

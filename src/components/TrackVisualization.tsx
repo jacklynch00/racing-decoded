@@ -133,6 +133,7 @@ export function TrackVisualization({ raceId, driverId }: TrackVisualizationProps
 		if (animatorRef.current) {
 			animatorRef.current.setCallbacks({
 				onLapUpdate: (lap, total, lapTime, progress = 0) => {
+					console.log(`onLapUpdate: lap=${lap}, total=${total}, progress=${progress?.toFixed(3)}`);
 					setCurrentLap(lap);
 					setTotalLaps(total);
 					setCurrentLapTime(lapTime || null);
@@ -289,7 +290,7 @@ export function TrackVisualization({ raceId, driverId }: TrackVisualizationProps
 							</div>
 
 							{/* Animation Status Overlay */}
-							{trackInitialized && !animationData?.animationData.hasLapTimes && (
+							{trackInitialized && !loading && animationData && !animationData?.animationData.hasLapTimes && (
 								<div className='absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center'>
 									<Card className='max-w-md'>
 										<CardContent className='py-6'>

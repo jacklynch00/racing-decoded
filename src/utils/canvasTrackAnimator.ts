@@ -141,7 +141,7 @@ export class CanvasF1Animator {
 	setSpeed(speed: number): void {
 		const wasAnimating = this.isAnimating;
 		const oldSpeed = this.animationSpeed;
-		this.animationSpeed = Math.max(1, Math.min(6, speed));
+		this.animationSpeed = Math.max(1, Math.min(10, speed));
 
 		if (wasAnimating && oldSpeed !== this.animationSpeed) {
 			// Calculate how much time has elapsed in the current lap at the old speed
